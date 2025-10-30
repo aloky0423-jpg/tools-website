@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URL Encoder/Decoder Tool</title>
+
+  <style>
+    :root {
+      --primary: #007bff;
+      --light: #f8f9fa;
+      --dark: #222;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h2 {
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    textarea {
+      width: 90%;
+      height: 100px;
+      padding: 10px;
+      border: 1px solid var(--primary);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      margin: 10px 0;
+      resize: none;
+    }
+
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      margin: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      border: 1px solid var(--primary);
+      border-radius: var(--radius);
+      background: var(--light);
+      color: var(--dark);
+      font-size: 0.95rem;
+      word-wrap: break-word;
+    }
+
+    /* Image Converter Section */
+    .upload-area {
+      border: 2px dashed var(--primary);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .upload-area:hover {
+      background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: var(--radius);
+      margin-top: 20px;
+      display: none;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--primary);
+      font-size: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      textarea {
+        width: 100%;
+      }
+      .controls {
+        flex-direction: column;
+      }
+      select, button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>🔗 URL Encoder/Decoder Tool</h2>
+
+  <!-- URL ENCODER/DECODER -->
+  <div class="card">
+    <h3>Encode or Decode URLs</h3>
+    <textarea id="inputText" placeholder="Enter text or URL here..."></textarea>
+    <div>
+      <button onclick="encodeURL()">Encode URL</button>
+      <button onclick="decodeURL()">Decode URL</button>
+      <button onclick="clearText()">Clear</button>
+    </div>
+    <div class="result" id="outputResult"></div>
+  </div>
+
+  <!-- IMAGE CONVERTER TOOL -->
+  <div class="card">
+    <h3>🖼️ Image Upload & Convert</h3>
+    <label for="imageInput" class="upload-area">
+      <p>📤 Click or drag to upload an image</p>
+    </label>
+    <input type="file" id="imageInput" accept="image/*" />
+    <img id="preview" alt="Image Preview" />
+
+    <div class="controls" id="controls" style="display:none;">
+      <select id="formatSelect">
+        <option value="image/png">PNG</option>
+        <option value="image/jpeg">JPEG</option>
+        <option value="image/webp">WEBP</option>
+      </select>
+      <button onclick="convertImage()">Convert & Download</button>
+    </div>
+  </div>
+
+  <script>
+    // ---------- URL ENCODER / DECODER ----------
+    function encodeURL() {
+      const input = document.getElementById('inputText').value.trim();
+      const resultBox = document.getElementById('outputResult');
+      if (!input) {
+        resultBox.textContent = "⚠️ Please enter some text to encode.";
+        return;
+      }
+      resultBox.textContent = encodeURIComponent(input);
+    }
+
+    function decodeURL() {
+      const input = document.getElementById('inputText').value.trim();
+      const resultBox = document.getElementById('outputResult');
+      if (!input) {
+        resultBox.textContent = "⚠️ Please enter an encoded URL to decode.";
+        return;
+      }
+      try {
+        resultBox.textContent = decodeURIComponent(input);
+      } catch (e) {
+        resultBox.textContent = "⚠️ Invalid encoded URL!";
+      }
+    }
+
+    function clearText() {
+      document.getElementById('inputText').value = "";
+      document.getElementById('outputResult').textContent = "";
+    }
+
+    // ---------- IMAGE UPLOAD & CONVERT ----------
+    const imageInput = document.getElementById('imageInput');
+    const preview = document.getElementById('preview');
+    const controls = document.getElementById('controls');
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        preview.src = reader.result;
+        preview.style.display = 'block';
+        controls.style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function convertImage() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      const format = document.getElementById('formatSelect').value;
+      img.src = preview.src;
+
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        const link = document.createElement('a');
+        link.download = `converted.${format.split('/')[1]}`;
+        link.href = canvas.toDataURL(format, 0.9);
+        link.click();
+      };
+    }
+  </script>
+</body>
+</html>
