@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palette Generator & Image Converter</title>
+
+<style>
+  :root {
+    --primary: #007bff;
+    --light: #f4f9ff;
+    --white: #ffffff;
+    --radius: 12px;
+    --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  * {
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  body {
+    background: var(--light);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    background: var(--white);
+    padding: 25px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    max-width: 900px;
+    width: 100%;
+  }
+
+  h1 {
+    text-align: center;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+
+  p {
+    text-align: center;
+    color: #555;
+    margin-bottom: 25px;
+  }
+
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+
+  .upload-area {
+    border: 2px dashed var(--primary);
+    border-radius: var(--radius);
+    text-align: center;
+    padding: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .upload-area:hover {
+    background: rgba(0,123,255,0.05);
+  }
+
+  .preview img {
+    max-width: 100%;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-top: 15px;
+  }
+
+  .palette {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+    gap: 10px;
+  }
+
+  .color-box {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 10px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  select, button {
+    padding: 10px 15px;
+    border-radius: var(--radius);
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+
+  button {
+    background: var(--primary);
+    color: var(--white);
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background: #0056b3;
+  }
+
+  @media (max-width: 700px) {
+    .controls {
+      flex-direction: column;
+      align-items: center;
+    }
+    button, select {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🎨 Palette Generator & Image Converter</h1>
+  <p>Extract color palettes from images & convert them easily — Blue & White Theme</p>
+
+  <label class="upload-area" for="imageInput">📤 Click or drag to upload an image</label>
+  <input type="file" id="imageInput" accept="image/*">
+
+  <div class="preview" id="preview"></div>
+  <div class="palette" id="palette"></div>
+
+  <div class="controls" id="controls" style="display:none;">
+    <select id="formatSelect">
+      <option value="image/png">PNG</option>
+      <option value="image/jpeg">JPEG</option>
+      <option value="image/webp">WEBP</option>
+    </select>
+    <button id="convertImageBtn">Convert & Download</button>
+  </div>
+</div>
+
+<script>
+// -------------- IMAGE PREVIEW & PALETTE GENERATOR --------------
+const imageInput = document.getElementById("imageInput");
+const preview = document.getElementById("preview");
+const palette = document.getElementById("palette");
+const controls = document.getElementById("controls");
+const convertImageBtn = document.getElementById("convertImageBtn");
+let uploadedImage = null;
+
+imageInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    uploadedImage = new Image();
+    uploadedImage.src = reader.result;
+    uploadedImage.onload = () => {
+      preview.innerHTML = `<img src="${reader.result}" alt="Preview">`;
+      extractPalette(uploadedImage);
+      controls.style.display = "flex";
+    };
+  };
+  reader.readAsDataURL(file);
+});
+
+function extractPalette(image) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width = image.width;
+  const height = canvas.height = image.height;
+  ctx.drawImage(image, 0, 0, width, height);
+
+  const imageData = ctx.getImageData(0, 0, width, height).data;
+  const colorMap = {};
+  for (let i = 0; i < imageData.length; i += 4) {
+    const r = imageData[i], g = imageData[i+1], b = imageData[i+2];
+    const key = `${r},${g},${b}`;
+    colorMap[key] = (colorMap[key] || 0) + 1;
+  }
+
+  const topColors = Object.entries(colorMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([key]) => `rgb(${key})`);
+
+  palette.innerHTML = "";
+  topColors.forEach(color => {
+    const div = document.createElement("div");
+    div.className = "color-box";
+    div.style.background = color;
+    div.textContent = color.replace("rgb(", "").replace(")", "");
+    div.title = color;
+    div.onclick = () => navigator.clipboard.writeText(color);
+    palette.appendChild(div);
+  });
+}
+
+// -------------- IMAGE CONVERTER --------------
+convertImageBtn.addEventListener("click", () => {
+  if (!uploadedImage) return alert("Please upload an image first.");
+  const format = document.getElementById("formatSelect").value;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = uploadedImage.width;
+  canvas.height = uploadedImage.height;
+  ctx.drawImage(uploadedImage, 0, 0);
+  const link = document.createElement("a");
+  link.download = `converted.${format.split("/")[1]}`;
+  link.href = canvas.toDataURL(format, 0.9);
+  link.click();
+});
+</script>
+
+</body>
+</html>
