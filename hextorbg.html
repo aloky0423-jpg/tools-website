@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HEX ↔ RGB Converter & Image Converter</title>
+<style>
+  :root {
+    --primary: #007bff;
+    --light: #f4f9ff;
+    --white: #ffffff;
+    --dark: #1a1a1a;
+    --radius: 12px;
+    --shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+
+  * {
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+  }
+
+  body {
+    background: var(--light);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 25px;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  h1 {
+    text-align: center;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+
+  p {
+    text-align: center;
+    color: #555;
+    margin-bottom: 25px;
+  }
+
+  .section {
+    margin-bottom: 40px;
+  }
+
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  input, select, button, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: var(--radius);
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+
+  button {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background: #0056b3;
+  }
+
+  .result {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--primary);
+  }
+
+  .color-preview {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius);
+    margin: 10px auto;
+    border: 2px solid #ccc;
+  }
+
+  /* Image Converter Styles */
+  .upload-area {
+    border: 2px dashed var(--primary);
+    border-radius: var(--radius);
+    text-align: center;
+    padding: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .upload-area:hover {
+    background: rgba(0,123,255,0.05);
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+
+  .preview img {
+    margin-top: 15px;
+    max-width: 100%;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  @media (max-width: 700px) {
+    .controls {
+      flex-direction: column;
+      align-items: center;
+    }
+    button, select {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎨 HEX ↔ RGB Converter & Image Converter</h1>
+  <p>Convert colors and images easily — Bright Blue & White Theme</p>
+
+  <!-- HEX ↔ RGB Converter -->
+  <div class="section">
+    <h2 style="color:var(--primary);">💡 HEX ↔ RGB Converter</h2>
+    <label for="hexInput">HEX Color:</label>
+    <input type="text" id="hexInput" placeholder="#007bff or 007bff">
+    <button id="hexToRgbBtn">Convert HEX → RGB</button>
+
+    <label for="rgbInput">RGB Color:</label>
+    <input type="text" id="rgbInput" placeholder="e.g. 0, 123, 255">
+    <button id="rgbToHexBtn">Convert RGB → HEX</button>
+
+    <div class="color-preview" id="colorPreview"></div>
+    <div class="result" id="colorResult"></div>
+  </div>
+
+  <!-- Image Converter -->
+  <div class="section">
+    <h2 style="color:var(--primary);">🖼 Image Upload & Converter</h2>
+    <label class="upload-area" for="imageInput">📤 Click or drag to upload an image</label>
+    <input type="file" id="imageInput" accept="image/*">
+    <div class="preview" id="preview"></div>
+
+    <div class="controls" id="controls" style="display:none;">
+      <select id="formatSelect">
+        <option value="image/png">PNG</option>
+        <option value="image/jpeg">JPEG</option>
+        <option value="image/webp">WEBP</option>
+      </select>
+      <button id="convertImageBtn">Convert & Download</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ------------ HEX TO RGB ------------
+  const hexInput = document.getElementById("hexInput");
+  const rgbInput = document.getElementById("rgbInput");
+  const hexToRgbBtn = document.getElementById("hexToRgbBtn");
+  const rgbToHexBtn = document.getElementById("rgbToHexBtn");
+  const colorResult = document.getElementById("colorResult");
+  const colorPreview = document.getElementById("colorPreview");
+
+  hexToRgbBtn.addEventListener("click", () => {
+    let hex = hexInput.value.trim().replace("#", "");
+    if (hex.length === 3) {
+      hex = hex.split("").map(x => x + x).join("");
+    }
+    if (hex.length !== 6) {
+      alert("Invalid HEX color.");
+      return;
+    }
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    colorResult.innerText = `RGB(${r}, ${g}, ${b})`;
+    colorPreview.style.background = `rgb(${r}, ${g}, ${b})`;
+  });
+
+  // ------------ RGB TO HEX ------------
+  rgbToHexBtn.addEventListener("click", () => {
+    const rgb = rgbInput.value.trim().split(",");
+    if (rgb.length !== 3) {
+      alert("Please enter valid RGB values like 0, 123, 255");
+      return;
+    }
+    const [r, g, b] = rgb.map(x => parseInt(x.trim()));
+    if ([r, g, b].some(isNaN)) {
+      alert("Invalid RGB input.");
+      return;
+    }
+    const hex = "#" + [r, g, b]
+      .map(x => {
+        const hexPart = x.toString(16);
+        return hexPart.length === 1 ? "0" + hexPart : hexPart;
+      })
+      .join("");
+    colorResult.innerText = hex.toUpperCase();
+    colorPreview.style.background = hex;
+  });
+
+  // ------------ IMAGE CONVERTER ------------
+  const imageInput = document.getElementById("imageInput");
+  const preview = document.getElementById("preview");
+  const controls = document.getElementById("controls");
+  const convertImageBtn = document.getElementById("convertImageBtn");
+  let uploadedImage = null;
+
+  imageInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      uploadedImage = new Image();
+      uploadedImage.src = reader.result;
+      preview.innerHTML = `<img src="${reader.result}" alt="Preview Image">`;
+      controls.style.display = "flex";
+    };
+    reader.readAsDataURL(file);
+  });
+
+  convertImageBtn.addEventListener("click", () => {
+    if (!uploadedImage) return alert("Please upload an image first.");
+    const format = document.getElementById("formatSelect").value;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = uploadedImage.width;
+    canvas.height = uploadedImage.height;
+    ctx.drawImage(uploadedImage, 0, 0);
+    const link = document.createElement("a");
+    link.download = `converted.${format.split("/")[1]}`;
+    link.href = canvas.toDataURL(format, 0.9);
+    link.click();
+  });
+</script>
+</body>
+</html>
