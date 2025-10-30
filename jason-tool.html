@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>JSON Formatter & Validator | Multi-Tool Website</title>
+  <style>
+    :root {
+      --primary: #007bff;
+      --bg: #f5f9ff;
+      --card: #ffffff;
+      --text: #1e1e1e;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 20px;
+    }
+    header {
+      grid-column: 1 / -1;
+      margin-bottom: 10px;
+    }
+    h1 {
+      color: var(--primary);
+      margin: 0;
+      font-size: 1.6rem;
+    }
+    p {
+      margin: 5px 0 0;
+      color: #444;
+      font-size: 0.9rem;
+    }
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 15px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
+    textarea {
+      width: 100%;
+      height: 350px;
+      padding: 10px;
+      border-radius: var(--radius);
+      border: 1px solid #ddd;
+      resize: none;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    button, select, input[type="file"] {
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    button.secondary {
+      background: #eee;
+      color: #111;
+    }
+    .output {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: #333;
+    }
+    /* Image Tool */
+    .upload-box {
+      border: 2px dashed rgba(0,123,255,0.3);
+      border-radius: var(--radius);
+      text-align: center;
+      padding: 20px;
+      background: #fdfdff;
+      cursor: pointer;
+    }
+    .upload-box input { display: none; }
+    .preview {
+      margin-top: 10px;
+      text-align: center;
+    }
+    .preview img {
+      max-width: 100%;
+      max-height: 260px;
+      border-radius: 10px;
+    }
+    .img-controls {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .img-controls select, .img-controls input[type=range] {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+    .info {
+      font-size: 0.8rem;
+      color: #333;
+      margin-top: 8px;
+      text-align: center;
+    }
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>JSON Formatter & Validator + Image Converter</h1>
+      <p>Bright blue theme · Format and validate JSON easily · Convert images and compress them on the fly</p>
+    </header>
+
+    <!-- JSON Tool -->
+    <section class="card">
+      <div class="controls">
+        <input type="file" id="jsonFile" accept=".json,.txt">
+        <button id="formatBtn">Format</button>
+        <button id="minifyBtn">Minify</button>
+        <button id="validateBtn">Validate</button>
+        <button id="downloadBtn">Download</button>
+        <button id="clearBtn" class="secondary">Clear</button>
+      </div>
+
+      <textarea id="jsonInput" placeholder="Paste your JSON here..."></textarea>
+      <div class="output" id="outputMsg"></div>
+    </section>
+
+    <!-- Image Converter -->
+    <aside class="card">
+      <h3 style="color:var(--primary);margin-top:0">🖼 Image Converter & Compressor</h3>
+      <label class="upload-box" for="imageInput">
+        <strong>Click to upload</strong><br>
+        or drag & drop an image here
+      </label>
+      <input type="file" id="imageInput" accept="image/*">
+
+      <div class="preview" id="previewArea"><small>No image uploaded</small></div>
+      <div class="img-controls" id="imgControls" style="display:none;">
+        <select id="imgFormat">
+          <option value="image/png">PNG</option>
+          <option value="image/jpeg">JPEG</option>
+          <option value="image/webp">WEBP</option>
+        </select>
+        <label for="qualityRange">Quality:</label>
+        <input type="range" id="qualityRange" min="10" max="100" value="90">
+        <button id="downloadImgBtn">Download</button>
+      </div>
+      <div class="info" id="imgInfo"></div>
+    </aside>
+  </div>
+
+  <script>
+    // JSON Tool
+    const jsonInput = document.getElementById("jsonInput");
+    const msg = document.getElementById("outputMsg");
+
+    document.getElementById("jsonFile").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        jsonInput.value = reader.result;
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById("formatBtn").addEventListener("click", () => {
+      try {
+        const formatted = JSON.stringify(JSON.parse(jsonInput.value), null, 2);
+        jsonInput.value = formatted;
+        msg.textContent = "✅ JSON formatted successfully!";
+        msg.style.color = "green";
+      } catch {
+        msg.textContent = "❌ Invalid JSON.";
+        msg.style.color = "red";
+      }
+    });
+
+    document.getElementById("minifyBtn").addEventListener("click", () => {
+      try {
+        const minified = JSON.stringify(JSON.parse(jsonInput.value));
+        jsonInput.value = minified;
+        msg.textContent = "✅ JSON minified successfully!";
+        msg.style.color = "green";
+      } catch {
+        msg.textContent = "❌ Invalid JSON.";
+        msg.style.color = "red";
+      }
+    });
+
+    document.getElementById("validateBtn").addEventListener("click", () => {
+      try {
+        JSON.parse(jsonInput.value);
+        msg.textContent = "✅ JSON is valid!";
+        msg.style.color = "green";
+      } catch (err) {
+        msg.textContent = "❌ Invalid JSON: " + err.message;
+        msg.style.color = "red";
+      }
+    });
+
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      const blob = new Blob([jsonInput.value], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "formatted.json";
+      a.click();
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      jsonInput.value = "";
+      msg.textContent = "";
+    });
+
+    // Image Converter
+    const imgInput = document.getElementById("imageInput");
+    const preview = document.getElementById("previewArea");
+    const imgControls = document.getElementById("imgControls");
+    const imgInfo = document.getElementById("imgInfo");
+
+    let imgData = null;
+
+    imgInput.addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith("image/")) {
+        alert("Upload an image file.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        imgData = reader.result;
+        preview.innerHTML = `<img src="${imgData}" id="imgPreview">`;
+        imgControls.style.display = "flex";
+        imgInfo.textContent = `${file.name} • ${(file.size/1024).toFixed(1)} KB`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("downloadImgBtn").addEventListener("click", async () => {
+      if (!imgData) return alert("Upload an image first.");
+      const format = document.getElementById("imgFormat").value;
+      const quality = document.getElementById("qualityRange").value / 100;
+      const img = new Image();
+      img.src = imgData;
+      await img.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      const dataUrl = canvas.toDataURL(format, quality);
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = "converted." + format.split("/")[1];
+      a.click();
+    });
+  </script>
+</body>
+</html>
