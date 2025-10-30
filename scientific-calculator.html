@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scientific Calculator Tool</title>
+
+  <style>
+    :root {
+      --primary: #007bff;
+      --light: #f8f9fa;
+      --dark: #222;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h2 {
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .calculator {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .display {
+      background: #f0f8ff;
+      border: 2px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 15px;
+      font-size: 1.4rem;
+      text-align: right;
+      margin-bottom: 15px;
+      overflow-x: auto;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 15px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .special {
+      background: #00c851;
+    }
+
+    .special:hover {
+      background: #009640;
+    }
+
+    /* Image upload & conversion area */
+    .image-tool {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      max-width: 500px;
+      width: 100%;
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .upload-area {
+      border: 2px dashed var(--primary);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .upload-area:hover {
+      background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: var(--radius);
+      margin-top: 20px;
+      display: none;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--primary);
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      .buttons {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      button {
+        padding: 12px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>🧮 Scientific Calculator Tool</h2>
+
+  <div class="calculator">
+    <div id="display" class="display">0</div>
+    <div class="buttons">
+      <button onclick="clearDisplay()">C</button>
+      <button onclick="deleteChar()">DEL</button>
+      <button onclick="appendValue('(')">(</button>
+      <button onclick="appendValue(')')">)</button>
+      <button onclick="appendValue('/')">÷</button>
+
+      <button onclick="appendValue('7')">7</button>
+      <button onclick="appendValue('8')">8</button>
+      <button onclick="appendValue('9')">9</button>
+      <button onclick="appendValue('*')">×</button>
+      <button onclick="appendValue('%')">%</button>
+
+      <button onclick="appendValue('4')">4</button>
+      <button onclick="appendValue('5')">5</button>
+      <button onclick="appendValue('6')">6</button>
+      <button onclick="appendValue('-')">−</button>
+      <button onclick="appendValue('Math.sqrt(')">√</button>
+
+      <button onclick="appendValue('1')">1</button>
+      <button onclick="appendValue('2')">2</button>
+      <button onclick="appendValue('3')">3</button>
+      <button onclick="appendValue('+')">+</button>
+      <button onclick="appendValue('**')">xʸ</button>
+
+      <button onclick="appendValue('0')">0</button>
+      <button onclick="appendValue('.')">.</button>
+      <button onclick="appendValue('Math.sin(')">sin</button>
+      <button onclick="appendValue('Math.cos(')">cos</button>
+      <button onclick="appendValue('Math.tan(')">tan</button>
+
+      <button onclick="appendValue('Math.log(')">log</button>
+      <button onclick="appendValue('Math.exp(')">exp</button>
+      <button onclick="appendValue('Math.PI')">π</button>
+      <button onclick="appendValue('Math.E')">e</button>
+      <button class="special" onclick="calculate()">=</button>
+    </div>
+  </div>
+
+  <!-- Image Upload + Conversion Section -->
+  <div class="image-tool">
+    <h2>🖼️ Image Upload & Convert</h2>
+    <label for="imageInput" class="upload-area">
+      <p>📤 Click or drag to upload an image</p>
+    </label>
+    <input type="file" id="imageInput" accept="image/*" />
+    <img id="preview" alt="Image Preview" />
+
+    <div class="controls" id="controls" style="display:none;">
+      <select id="formatSelect">
+        <option value="image/png">PNG</option>
+        <option value="image/jpeg">JPEG</option>
+        <option value="image/webp">WEBP</option>
+      </select>
+      <button onclick="convertImage()">Convert & Download</button>
+    </div>
+  </div>
+
+  <script>
+    // --- Scientific Calculator Logic ---
+    const display = document.getElementById('display');
+
+    function appendValue(val) {
+      if (display.textContent === "0") display.textContent = "";
+      display.textContent += val;
+    }
+
+    function clearDisplay() {
+      display.textContent = "0";
+    }
+
+    function deleteChar() {
+      display.textContent = display.textContent.slice(0, -1) || "0";
+    }
+
+    function calculate() {
+      try {
+        const result = eval(display.textContent);
+        display.textContent = result;
+      } catch {
+        display.textContent = "Error";
+      }
+    }
+
+    // --- Image Upload & Conversion Logic ---
+    const imageInput = document.getElementById('imageInput');
+    const preview = document.getElementById('preview');
+    const controls = document.getElementById('controls');
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        preview.src = reader.result;
+        preview.style.display = 'block';
+        controls.style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function convertImage() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      const format = document.getElementById('formatSelect').value;
+      img.src = preview.src;
+
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        const link = document.createElement('a');
+        link.download = `converted.${format.split('/')[1]}`;
+        link.href = canvas.toDataURL(format, 0.9);
+        link.click();
+      };
+    }
+  </script>
+</body>
+</html>
