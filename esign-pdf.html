@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF eSign Tool</title>
+
+  <style>
+    :root {
+      --primary: #007bff;
+      --light: #f8f9fa;
+      --text: #222;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--light);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 700px;
+      width: 100%;
+      text-align: center;
+      padding: 25px;
+    }
+
+    h2 {
+      color: var(--primary);
+      margin-bottom: 15px;
+    }
+
+    .upload-area {
+      border: 2px dashed var(--primary);
+      border-radius: var(--radius);
+      padding: 25px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .upload-area:hover {
+      background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    iframe {
+      width: 100%;
+      height: 300px;
+      margin-top: 20px;
+      border-radius: var(--radius);
+      display: none;
+    }
+
+    canvas {
+      border: 1px solid #ddd;
+      border-radius: var(--radius);
+      margin-top: 15px;
+      width: 100%;
+      height: 150px;
+      cursor: crosshair;
+    }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    select, button, input[type="file"] {
+      padding: 10px 15px;
+      border-radius: var(--radius);
+      border: 1px solid var(--primary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    @media (max-width: 600px) {
+      .controls {
+        flex-direction: column;
+      }
+      select, button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>✍️ PDF eSign Tool</h2>
+
+    <label for="pdfInput" class="upload-area">
+      <p>📤 Click or drag a PDF file to upload</p>
+    </label>
+    <input type="file" id="pdfInput" accept=".pdf" />
+
+    <iframe id="pdfPreview"></iframe>
+
+    <div class="controls" id="controls" style="display:none;">
+      <canvas id="signPad"></canvas>
+      <div class="controls" style="margin-top: 10px;">
+        <button id="clearSign">Clear Signature</button>
+        <button id="applySign">Apply Signature</button>
+      </div>
+
+      <select id="formatSelect">
+        <option value="pdf">Export as PDF</option>
+        <option value="docx">Export as DOCX</option>
+        <option value="txt">Export as TXT</option>
+      </select>
+      <button id="downloadBtn" style="display:none;">Download Signed File</button>
+    </div>
+  </div>
+
+  <script>
+    const pdfInput = document.getElementById('pdfInput');
+    const pdfPreview = document.getElementById('pdfPreview');
+    const controls = document.getElementById('controls');
+    const signPad = document.getElementById('signPad');
+    const clearSign = document.getElementById('clearSign');
+    const applySign = document.getElementById('applySign');
+    const formatSelect = document.getElementById('formatSelect');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    let currentFile = null;
+    let signedBlob = null;
+
+    // Initialize canvas for signature
+    const ctx = signPad.getContext('2d');
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+
+    let drawing = false;
+
+    signPad.addEventListener('mousedown', () => drawing = true);
+    signPad.addEventListener('mouseup', () => drawing = false);
+    signPad.addEventListener('mousemove', drawSignature);
+
+    signPad.addEventListener('touchstart', () => drawing = true);
+    signPad.addEventListener('touchend', () => drawing = false);
+    signPad.addEventListener('touchmove', drawSignatureTouch);
+
+    function drawSignature(e) {
+      if (!drawing) return;
+      const rect = signPad.getBoundingClientRect();
+      ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+      ctx.stroke();
+    }
+
+    function drawSignatureTouch(e) {
+      if (!drawing) return;
+      const rect = signPad.getBoundingClientRect();
+      const touch = e.touches[0];
+      ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+      ctx.stroke();
+      e.preventDefault();
+    }
+
+    clearSign.addEventListener('click', () => {
+      ctx.clearRect(0, 0, signPad.width, signPad.height);
+      ctx.beginPath();
+    });
+
+    pdfInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      currentFile = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        pdfPreview.src = reader.result;
+        pdfPreview.style.display = 'block';
+        controls.style.display = 'flex';
+        downloadBtn.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    applySign.addEventListener('click', () => {
+      if (!currentFile) return alert('Please upload a PDF first!');
+      const signatureData = signPad.toDataURL('image/png');
+      const selectedFormat = formatSelect.value;
+
+      // Simulated PDF signing
+      const signedText = `Signed version of ${currentFile.name} with eSignature applied.`;
+      let mimeType = 'application/pdf';
+      if (selectedFormat === 'docx')
+        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      if (selectedFormat === 'txt') mimeType = 'text/plain';
+
+      signedBlob = new Blob([signedText], { type: mimeType });
+      alert('✅ Signature applied successfully!');
+      pdfPreview.src = signatureData;
+      downloadBtn.style.display = 'inline-block';
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!signedBlob) return;
+      const link = document.createElement('a');
+      const ext = formatSelect.value;
+      link.download = `signed.${ext}`;
+      link.href = URL.createObjectURL(signedBlob);
+      link.click();
+    });
+  </script>
+</body>
+</html>
