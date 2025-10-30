@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Encrypter & Image Converter</title>
+<style>
+  :root {
+    --primary: #007bff;
+    --light: #f4f9ff;
+    --white: #ffffff;
+    --dark: #1a1a1a;
+    --radius: 12px;
+    --shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+
+  * {
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+  }
+
+  body {
+    background: var(--light);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 25px;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  h1 {
+    text-align: center;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+
+  p {
+    text-align: center;
+    color: #555;
+    margin-bottom: 25px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 200px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: var(--radius);
+    resize: vertical;
+    font-size: 1rem;
+  }
+
+  button {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background: #0056b3;
+  }
+
+  select, input[type="number"] {
+    padding: 10px;
+    border-radius: var(--radius);
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .result-box {
+    margin-top: 15px;
+    background: var(--light);
+    padding: 15px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    min-height: 50px;
+    font-size: 1.1rem;
+    color: var(--dark);
+    word-wrap: break-word;
+  }
+
+  /* Image Converter Section */
+  .upload-area {
+    border: 2px dashed var(--primary);
+    border-radius: var(--radius);
+    text-align: center;
+    padding: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .upload-area:hover {
+    background: rgba(0,123,255,0.05);
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+
+  .preview img {
+    margin-top: 15px;
+    max-width: 100%;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  @media (max-width: 700px) {
+    .controls {
+      flex-direction: column;
+      align-items: center;
+    }
+    button, select, input {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔐 Text Encrypter + 🖼 Image Converter</h1>
+  <p>Encrypt your text or convert images — in a bright blue & white design</p>
+
+  <!-- Text Encrypter Section -->
+  <div class="section">
+    <h2 style="color:var(--primary);">📝 Text Encrypter / Decrypter</h2>
+    <textarea id="textInput" placeholder="Enter text to encrypt or decrypt..."></textarea>
+
+    <div class="controls">
+      <select id="methodSelect">
+        <option value="base64">Base64</option>
+        <option value="caesar">Caesar Cipher</option>
+      </select>
+
+      <input type="number" id="shiftInput" placeholder="Shift (for Caesar)" min="1" max="25" style="display:none;">
+
+      <button id="encryptBtn">Encrypt</button>
+      <button id="decryptBtn">Decrypt</button>
+      <button id="clearBtn">Clear</button>
+      <button id="copyBtn">Copy</button>
+    </div>
+
+    <div class="result-box" id="resultBox"></div>
+  </div>
+
+  <!-- Image Converter Section -->
+  <div class="section">
+    <h2 style="color:var(--primary);">🖼 Image Upload & Converter</h2>
+    <label class="upload-area" for="imageInput">📤 Click or drag to upload an image</label>
+    <input type="file" id="imageInput" accept="image/*">
+    <div class="preview" id="preview"></div>
+
+    <div class="controls" id="controls" style="display:none;">
+      <select id="formatSelect">
+        <option value="image/png">PNG</option>
+        <option value="image/jpeg">JPEG</option>
+        <option value="image/webp">WEBP</option>
+      </select>
+      <button id="convertImageBtn">Convert & Download</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---------- TEXT ENCRYPTER ----------
+  const textInput = document.getElementById("textInput");
+  const resultBox = document.getElementById("resultBox");
+  const methodSelect = document.getElementById("methodSelect");
+  const shiftInput = document.getElementById("shiftInput");
+
+  methodSelect.addEventListener("change", () => {
+    shiftInput.style.display = methodSelect.value === "caesar" ? "block" : "none";
+  });
+
+  // Base64 Encode/Decode
+  const base64Encrypt = text => btoa(unescape(encodeURIComponent(text)));
+  const base64Decrypt = text => decodeURIComponent(escape(atob(text)));
+
+  // Caesar Cipher Encode/Decode
+  const caesarCipher = (text, shift, decrypt = false) => {
+    if (decrypt) shift = (26 - shift) % 26;
+    return text.replace(/[a-z]/gi, char => {
+      const base = char < "a" ? 65 : 97;
+      return String.fromCharCode((char.charCodeAt(0) - base + shift) % 26 + base);
+    });
+  };
+
+  document.getElementById("encryptBtn").addEventListener("click", () => {
+    const text = textInput.value.trim();
+    const method = methodSelect.value;
+    if (!text) return alert("Please enter some text to encrypt.");
+    let result;
+    if (method === "base64") result = base64Encrypt(text);
+    else {
+      const shift = parseInt(shiftInput.value) || 3;
+      result = caesarCipher(text, shift);
+    }
+    resultBox.textContent = result;
+  });
+
+  document.getElementById("decryptBtn").addEventListener("click", () => {
+    const text = textInput.value.trim();
+    const method = methodSelect.value;
+    if (!text) return alert("Please enter some text to decrypt.");
+    let result;
+    if (method === "base64") {
+      try { result = base64Decrypt(text); } catch { result = "⚠️ Invalid Base64 string"; }
+    } else {
+      const shift = parseInt(shiftInput.value) || 3;
+      result = caesarCipher(text, shift, true);
+    }
+    resultBox.textContent = result;
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    textInput.value = "";
+    resultBox.textContent = "";
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", () => {
+    if (!resultBox.textContent.trim()) return alert("Nothing to copy!");
+    navigator.clipboard.writeText(resultBox.textContent);
+    alert("✅ Text copied to clipboard!");
+  });
+
+  // ---------- IMAGE CONVERTER ----------
+  const imageInput = document.getElementById("imageInput");
+  const preview = document.getElementById("preview");
+  const controls = document.getElementById("controls");
+  const convertImageBtn = document.getElementById("convertImageBtn");
+  let uploadedImage = null;
+
+  imageInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      uploadedImage = new Image();
+      uploadedImage.src = reader.result;
+      preview.innerHTML = `<img src="${reader.result}" alt="Preview Image">`;
+      controls.style.display = "flex";
+    };
+    reader.readAsDataURL(file);
+  });
+
+  convertImageBtn.addEventListener("click", () => {
+    if (!uploadedImage) return alert("Please upload an image first.");
+    const format = document.getElementById("formatSelect").value;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = uploadedImage.width;
+    canvas.height = uploadedImage.height;
+    ctx.drawImage(uploadedImage, 0, 0);
+
+    const link = document.createElement("a");
+    link.download = `converted.${format.split("/")[1]}`;
+    link.href = canvas.toDataURL(format, 0.9);
+    link.click();
+  });
+</script>
+</body>
+</html>
