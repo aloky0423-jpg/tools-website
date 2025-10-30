@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image to Text Converter</title>
+
+  <!-- Tesseract.js for OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #007bff;
+      --light: #f8f9fa;
+      --text: #222;
+      --border-radius: 12px;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--light);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h2 {
+      color: var(--primary);
+      margin-bottom: 15px;
+    }
+
+    .upload-area {
+      border: 2px dashed var(--primary);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .upload-area:hover {
+      background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: var(--border-radius);
+      margin-top: 20px;
+      display: none;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    button {
+      padding: 10px 15px;
+      border-radius: var(--border-radius);
+      border: none;
+      background-color: var(--primary);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      border-radius: var(--border-radius);
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 15px;
+      font-size: 14px;
+      resize: vertical;
+      display: none;
+    }
+
+    .loader {
+      display: none;
+      margin-top: 20px;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    @media (max-width: 600px) {
+      .controls {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🖼️ Image to Text Converter</h2>
+    <label for="imageInput" class="upload-area">
+      <p>📤 Click or drag an image to upload</p>
+    </label>
+    <input type="file" id="imageInput" accept="image/*" />
+
+    <img id="preview" alt="Image Preview" />
+    <div class="controls" id="controls" style="display:none;">
+      <button id="extractBtn">Extract Text</button>
+      <button id="downloadBtn" style="display:none;">Download Text</button>
+    </div>
+
+    <div class="loader" id="loader">⏳ Extracting text... please wait</div>
+
+    <textarea id="outputText" placeholder="Extracted text will appear here..."></textarea>
+  </div>
+
+  <script>
+    const imageInput = document.getElementById("imageInput");
+    const preview = document.getElementById("preview");
+    const extractBtn = document.getElementById("extractBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const outputText = document.getElementById("outputText");
+    const loader = document.getElementById("loader");
+    const controls = document.getElementById("controls");
+
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        preview.src = reader.result;
+        preview.style.display = "block";
+        controls.style.display = "flex";
+        outputText.style.display = "none";
+        downloadBtn.style.display = "none";
+        outputText.value = "";
+      };
+      reader.readAsDataURL(file);
+    });
+
+    extractBtn.addEventListener("click", async () => {
+      if (!preview.src) return alert("Please upload an image first!");
+      loader.style.display = "block";
+      outputText.style.display = "none";
+      downloadBtn.style.display = "none";
+
+      try {
+        const result = await Tesseract.recognize(preview.src, 'eng', {
+          logger: info => console.log(info)
+        });
+        loader.style.display = "none";
+        outputText.style.display = "block";
+        outputText.value = result.data.text.trim() || "No text detected.";
+        downloadBtn.style.display = "inline-block";
+      } catch (error) {
+        loader.style.display = "none";
+        alert("Error extracting text. Please try another image.");
+        console.error(error);
+      }
+    });
+
+    downloadBtn.addEventListener("click", () => {
+      const blob = new Blob([outputText.value], { type: "text/plain" });
+      const link = document.createElement("a");
+      link.download = "extracted-text.txt";
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    });
+  </script>
+</body>
+</html>
