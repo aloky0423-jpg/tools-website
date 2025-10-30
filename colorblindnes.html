@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Color Blindness Simulator & Image Converter</title>
+
+<style>
+  :root {
+    --primary: #007bff;
+    --light: #f4f9ff;
+    --white: #ffffff;
+    --radius: 12px;
+    --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  * {
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  body {
+    background: var(--light);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    background: var(--white);
+    padding: 25px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    max-width: 900px;
+    width: 100%;
+  }
+
+  h1 {
+    text-align: center;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+
+  p {
+    text-align: center;
+    color: #555;
+    margin-bottom: 25px;
+  }
+
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+
+  .upload-area {
+    border: 2px dashed var(--primary);
+    border-radius: var(--radius);
+    text-align: center;
+    padding: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .upload-area:hover {
+    background: rgba(0,123,255,0.05);
+  }
+
+  .preview img {
+    max-width: 100%;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-top: 15px;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  select, button {
+    padding: 10px 15px;
+    border-radius: var(--radius);
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+
+  button {
+    background: var(--primary);
+    color: var(--white);
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background: #0056b3;
+  }
+
+  @media (max-width: 700px) {
+    .controls {
+      flex-direction: column;
+      align-items: center;
+    }
+    button, select {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>👁️ Color Blindness Simulator & Image Converter</h1>
+  <p>Simulate color vision deficiencies and convert images — Bright Blue & White Theme</p>
+
+  <label class="upload-area" for="imageInput">📤 Click or drag to upload an image</label>
+  <input type="file" id="imageInput" accept="image/*">
+
+  <div class="preview" id="preview"></div>
+
+  <div class="controls" id="controls" style="display:none;">
+    <select id="simulationType">
+      <option value="normal">Normal Vision</option>
+      <option value="protanopia">Protanopia (Red-Blind)</option>
+      <option value="deuteranopia">Deuteranopia (Green-Blind)</option>
+      <option value="tritanopia">Tritanopia (Blue-Blind)</option>
+    </select>
+
+    <select id="formatSelect">
+      <option value="image/png">PNG</option>
+      <option value="image/jpeg">JPEG</option>
+      <option value="image/webp">WEBP</option>
+    </select>
+
+    <button id="simulateBtn">Simulate</button>
+    <button id="convertImageBtn">Convert & Download</button>
+  </div>
+</div>
+
+<script>
+const imageInput = document.getElementById("imageInput");
+const preview = document.getElementById("preview");
+const controls = document.getElementById("controls");
+const simulateBtn = document.getElementById("simulateBtn");
+const convertImageBtn = document.getElementById("convertImageBtn");
+let uploadedImage = null;
+let simulatedCanvas = null;
+
+// Load and preview image
+imageInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    uploadedImage = new Image();
+    uploadedImage.src = reader.result;
+    uploadedImage.onload = () => {
+      preview.innerHTML = `<img src="${reader.result}" alt="Preview">`;
+      controls.style.display = "flex";
+    };
+  };
+  reader.readAsDataURL(file);
+});
+
+// Color blindness simulation matrices
+const colorMatrices = {
+  normal: [
+    [1,0,0],[0,1,0],[0,0,1]
+  ],
+  protanopia: [
+    [0.56667,0.43333,0],[0.55833,0.44167,0],[0,0.24167,0.75833]
+  ],
+  deuteranopia: [
+    [0.625,0.375,0],[0.7,0.3,0],[0,0.3,0.7]
+  ],
+  tritanopia: [
+    [0.95,0.05,0],[0,0.43333,0.56667],[0,0.475,0.525]
+  ]
+};
+
+// Apply simulation
+simulateBtn.addEventListener("click", () => {
+  if (!uploadedImage) return alert("Please upload an image first.");
+  const type = document.getElementById("simulationType").value;
+  simulatedCanvas = applyColorBlindness(uploadedImage, type);
+  preview.innerHTML = "";
+  preview.appendChild(simulatedCanvas);
+});
+
+function applyColorBlindness(image, type) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = image.width;
+  canvas.height = image.height;
+  ctx.drawImage(image, 0, 0, image.width, image.height);
+  
+  const imgData = ctx.getImageData(0, 0, image.width, image.height);
+  const data = imgData.data;
+  const matrix = colorMatrices[type];
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    data[i]   = r * matrix[0][0] + g * matrix[0][1] + b * matrix[0][2];
+    data[i+1] = r * matrix[1][0] + g * matrix[1][1] + b * matrix[1][2];
+    data[i+2] = r * matrix[2][0] + g * matrix[2][1] + b * matrix[2][2];
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  return canvas;
+}
+
+// Convert & Download
+convertImageBtn.addEventListener("click", () => {
+  if (!uploadedImage) return alert("Please upload an image first.");
+  const format = document.getElementById("formatSelect").value;
+  const canvas = simulatedCanvas || (() => {
+    const c = document.createElement("canvas");
+    const ctx = c.getContext("2d");
+    c.width = uploadedImage.width;
+    c.height = uploadedImage.height;
+    ctx.drawImage(uploadedImage, 0, 0);
+    return c;
+  })();
+  const link = document.createElement("a");
+  link.download = `converted.${format.split("/")[1]}`;
+  link.href = canvas.toDataURL(format, 0.9);
+  link.click();
+});
+</script>
+
+</body>
+</html>
