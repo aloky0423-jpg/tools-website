@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regex Tester & Image Converter Tool</title>
+<style>
+  :root {
+    --primary: #007bff;
+    --light: #f4f9ff;
+    --white: #ffffff;
+    --dark: #1a1a1a;
+    --radius: 12px;
+    --shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+
+  * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+  body {
+    background: var(--light);
+    margin: 0;
+    padding: 20px;
+    color: var(--dark);
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 25px;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  h1 {
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  p {
+    text-align: center;
+    color: #555;
+    margin-bottom: 25px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: var(--radius);
+    font-size: 1rem;
+  }
+
+  button {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: 0.3s;
+  }
+
+  button:hover { background: #0056b3; }
+
+  .section {
+    margin-bottom: 30px;
+  }
+
+  .matches {
+    background: #eaf4ff;
+    padding: 15px;
+    border-radius: var(--radius);
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    border: 1px solid #cfe2ff;
+    margin-top: 10px;
+  }
+
+  mark {
+    background-color: #ffe066;
+    border-radius: 3px;
+    padding: 2px 4px;
+  }
+
+  /* IMAGE TOOL */
+  .upload-area {
+    border: 2px dashed var(--primary);
+    border-radius: var(--radius);
+    text-align: center;
+    padding: 20px;
+    transition: 0.3s;
+    cursor: pointer;
+  }
+
+  .upload-area:hover {
+    background: rgba(0,123,255,0.05);
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+
+  .preview img {
+    margin-top: 15px;
+    max-width: 100%;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  select {
+    padding: 10px;
+    border-radius: var(--radius);
+    border: 1px solid #ccc;
+  }
+
+  @media (max-width: 700px) {
+    .controls {
+      flex-direction: column;
+      align-items: center;
+    }
+    button, select {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧩 Regex Tester & Image Converter</h1>
+    <p>Test regular expressions and convert images easily — Bright Blue & White Theme</p>
+
+    <!-- Regex Tester -->
+    <div class="section">
+      <h2 style="color:var(--primary);">🔍 Regex Tester</h2>
+      <input type="text" id="regexInput" placeholder="Enter your regex pattern (e.g. \\d+)" />
+      <textarea id="testText" placeholder="Enter the text to test..."></textarea>
+      <div class="controls">
+        <button id="testBtn">Test Regex</button>
+        <button id="clearBtn" style="background:#6c757d;">Clear</button>
+      </div>
+      <div class="matches" id="result"></div>
+    </div>
+
+    <!-- Image Converter -->
+    <div class="section">
+      <h2 style="color:var(--primary);">🖼 Image Upload & Converter</h2>
+      <label class="upload-area" for="imageInput">
+        📤 Click or drag to upload an image
+      </label>
+      <input type="file" id="imageInput" accept="image/*">
+      <div class="preview" id="preview"></div>
+
+      <div class="controls" id="controls" style="display:none;">
+        <select id="formatSelect">
+          <option value="image/png">PNG</option>
+          <option value="image/jpeg">JPEG</option>
+          <option value="image/webp">WEBP</option>
+        </select>
+        <button id="convertBtn">Convert & Download</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ----------- REGEX TESTER -----------
+  const regexInput = document.getElementById("regexInput");
+  const testText = document.getElementById("testText");
+  const resultDiv = document.getElementById("result");
+
+  document.getElementById("testBtn").addEventListener("click", () => {
+    const pattern = regexInput.value.trim();
+    const text = testText.value;
+    if (!pattern) return alert("Please enter a regex pattern.");
+
+    try {
+      const regex = new RegExp(pattern, "g");
+      const matches = [...text.matchAll(regex)];
+
+      if (matches.length === 0) {
+        resultDiv.innerHTML = "<strong>No matches found.</strong>";
+        return;
+      }
+
+      // Highlight matches
+      let highlighted = text;
+      matches.forEach((match) => {
+        const part = match[0];
+        highlighted = highlighted.replace(part, `<mark>${part}</mark>`);
+      });
+
+      resultDiv.innerHTML = `<strong>${matches.length} match(es) found:</strong><br><br>${highlighted}`;
+    } catch (err) {
+      resultDiv.innerHTML = `<strong style="color:red;">Invalid Regex: ${err.message}</strong>`;
+    }
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    regexInput.value = "";
+    testText.value = "";
+    resultDiv.innerHTML = "";
+  });
+
+  // ----------- IMAGE CONVERTER -----------
+  const imageInput = document.getElementById("imageInput");
+  const preview = document.getElementById("preview");
+  const controls = document.getElementById("controls");
+  const convertBtn = document.getElementById("convertBtn");
+
+  let uploadedImage = null;
+
+  imageInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      uploadedImage = new Image();
+      uploadedImage.src = reader.result;
+      preview.innerHTML = `<img src="${reader.result}" alt="Preview Image">`;
+      controls.style.display = "flex";
+    };
+    reader.readAsDataURL(file);
+  });
+
+  convertBtn.addEventListener("click", () => {
+    if (!uploadedImage) return alert("Please upload an image first.");
+    const format = document.getElementById("formatSelect").value;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = uploadedImage.width;
+    canvas.height = uploadedImage.height;
+    ctx.drawImage(uploadedImage, 0, 0);
+
+    const link = document.createElement("a");
+    link.download = `converted.${format.split("/")[1]}`;
+    link.href = canvas.toDataURL(format, 0.9);
+    link.click();
+  });
+</script>
+</body>
+</html>
