@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta Tag Analyzer</title>
+
+<style>
+  :root {
+    --primary: #007bff;
+    --light: #f4f9ff;
+    --white: #ffffff;
+    --dark: #1a1a1a;
+    --radius: 12px;
+    --shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+
+  * {
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  body {
+    background: var(--light);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    background: var(--white);
+    padding: 25px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    max-width: 900px;
+    width: 100%;
+  }
+
+  h1 {
+    text-align: center;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+
+  p {
+    text-align: center;
+    color: #555;
+    margin-bottom: 25px;
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: var(--radius);
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+
+  button {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: 0.3s;
+    display: block;
+    margin: 0 auto;
+  }
+
+  button:hover {
+    background: #0056b3;
+  }
+
+  .result {
+    margin-top: 25px;
+    border-top: 2px solid var(--primary);
+    padding-top: 15px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+  }
+
+  th {
+    background-color: var(--primary);
+    color: white;
+  }
+
+  @media (max-width: 700px) {
+    button {
+      width: 100%;
+    }
+    table, th, td {
+      font-size: 0.9rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🧩 Meta Tag Analyzer Tool</h1>
+  <p>Analyze your website’s meta tags — Bright Blue & White Theme</p>
+
+  <input type="url" id="urlInput" placeholder="Enter website URL (e.g., https://example.com)">
+  <textarea id="htmlInput" placeholder="Or paste your HTML code here..." rows="6"></textarea>
+
+  <button id="analyzeBtn">Analyze Meta Tags</button>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+const analyzeBtn = document.getElementById("analyzeBtn");
+const resultDiv = document.getElementById("result");
+
+analyzeBtn.addEventListener("click", async () => {
+  const url = document.getElementById("urlInput").value.trim();
+  const htmlInput = document.getElementById("htmlInput").value.trim();
+  resultDiv.innerHTML = "<p style='text-align:center;color:gray;'>Analyzing...</p>";
+
+  try {
+    let html = "";
+
+    // If URL is entered, fetch the HTML
+    if (url) {
+      html = await fetchHTML(url);
+    } 
+    // Else use pasted HTML
+    else if (htmlInput) {
+      html = htmlInput;
+    } 
+    else {
+      resultDiv.innerHTML = "<p style='color:red;text-align:center;'>Please enter a URL or paste HTML code.</p>";
+      return;
+    }
+
+    displayMetaTags(html);
+  } catch (error) {
+    resultDiv.innerHTML = `<p style='color:red;text-align:center;'>Error: ${error.message}</p>`;
+  }
+});
+
+// Fetch HTML content (CORS-safe method via proxy)
+async function fetchHTML(url) {
+  const proxy = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
+  const response = await fetch(proxy);
+  const data = await response.json();
+  return data.contents;
+}
+
+// Extract and display meta tags
+function displayMetaTags(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  const title = doc.querySelector("title") ? doc.querySelector("title").innerText : "Not Found";
+  const description = getMetaContent(doc, "description");
+  const keywords = getMetaContent(doc, "keywords");
+  const robots = getMetaContent(doc, "robots");
+  const ogTitle = getMetaProperty(doc, "og:title");
+  const ogDesc = getMetaProperty(doc, "og:description");
+  const ogImage = getMetaProperty(doc, "og:image");
+
+  let htmlResult = `
+    <h3>📊 Meta Tag Analysis Results</h3>
+    <table>
+      <tr><th>Meta Tag</th><th>Content</th></tr>
+      <tr><td><strong>Title</strong></td><td>${title}</td></tr>
+      <tr><td><strong>Description</strong></td><td>${description}</td></tr>
+      <tr><td><strong>Keywords</strong></td><td>${keywords}</td></tr>
+      <tr><td><strong>Robots</strong></td><td>${robots}</td></tr>
+      <tr><td><strong>OG Title</strong></td><td>${ogTitle}</td></tr>
+      <tr><td><strong>OG Description</strong></td><td>${ogDesc}</td></tr>
+      <tr><td><strong>OG Image</strong></td><td>${ogImage !== "Not Found" ? `<img src="${ogImage}" alt="OG Image" style="max-width:150px;border-radius:8px;">` : "Not Found"}</td></tr>
+    </table>
+  `;
+
+  resultDiv.innerHTML = htmlResult;
+}
+
+function getMetaContent(doc, name) {
+  const meta = doc.querySelector(`meta[name='${name}']`);
+  return meta ? meta.getAttribute("content") : "Not Found";
+}
+
+function getMetaProperty(doc, property) {
+  const meta = doc.querySelector(`meta[property='${property}']`);
+  return meta ? meta.getAttribute("content") : "Not Found";
+}
+</script>
+
+</body>
+</html>
