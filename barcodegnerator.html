@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Barcode Generator Tool</title>
+
+  <!-- JsBarcode CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #007bff;
+      --light: #f8f9fa;
+      --dark: #1a1a1a;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: "Poppins", sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h2 {
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 90%;
+      padding: 10px;
+      border: 1px solid var(--primary);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      margin: 10px 0;
+    }
+
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      margin: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    canvas {
+      margin-top: 20px;
+      max-width: 100%;
+      background: #fff;
+      padding: 10px;
+      border-radius: var(--radius);
+      display: none;
+    }
+
+    .result {
+      margin-top: 15px;
+      font-size: 0.95rem;
+      color: var(--dark);
+    }
+
+    /* Image converter */
+    .upload-area {
+      border: 2px dashed var(--primary);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .upload-area:hover {
+      background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: var(--radius);
+      margin-top: 20px;
+      display: none;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--primary);
+      font-size: 1rem;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 600px) {
+      input, textarea {
+        width: 100%;
+      }
+      .controls {
+        flex-direction: column;
+      }
+      select, button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>📦 Barcode Generator Tool</h2>
+
+  <!-- BARCODE GENERATOR -->
+  <div class="card">
+    <h3>🔢 Generate Your Barcode</h3>
+    <input type="text" id="barcodeText" placeholder="Enter text or number to generate barcode" />
+    <div>
+      <button onclick="generateBarcode()">Generate Barcode</button>
+      <button onclick="downloadBarcode()">Download Barcode</button>
+    </div>
+    <canvas id="barcode"></canvas>
+    <div class="result" id="barcodeMessage"></div>
+  </div>
+
+  <!-- IMAGE CONVERTER -->
+  <div class="card">
+    <h3>🖼️ Image Upload & Converter</h3>
+    <label for="imageInput" class="upload-area">
+      <p>📤 Click or drag to upload an image</p>
+    </label>
+    <input type="file" id="imageInput" accept="image/*" />
+    <img id="preview" alt="Image Preview" />
+
+    <div class="controls" id="controls" style="display:none;">
+      <select id="formatSelect">
+        <option value="image/png">PNG</option>
+        <option value="image/jpeg">JPEG</option>
+        <option value="image/webp">WEBP</option>
+      </select>
+      <button onclick="convertImage()">Convert & Download</button>
+    </div>
+  </div>
+
+  <script>
+    // ---------- BARCODE GENERATOR ----------
+    function generateBarcode() {
+      const text = document.getElementById("barcodeText").value.trim();
+      const canvas = document.getElementById("barcode");
+      const message = document.getElementById("barcodeMessage");
+
+      if (!text) {
+        message.innerHTML = "⚠️ Please enter text or number to generate a barcode.";
+        canvas.style.display = "none";
+        return;
+      }
+
+      JsBarcode(canvas, text, {
+        format: "CODE128",
+        lineColor: "#007bff",
+        width: 2,
+        height: 80,
+        displayValue: true,
+      });
+
+      canvas.style.display = "block";
+      message.innerHTML = "✅ Barcode generated successfully!";
+    }
+
+    function downloadBarcode() {
+      const canvas = document.getElementById("barcode");
+      if (canvas.style.display === "none") return alert("⚠️ Please generate a barcode first.");
+      const link = document.createElement("a");
+      link.download = "barcode.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    // ---------- IMAGE CONVERTER ----------
+    const imageInput = document.getElementById("imageInput");
+    const preview = document.getElementById("preview");
+    const controls = document.getElementById("controls");
+
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        preview.src = reader.result;
+        preview.style.display = "block";
+        controls.style.display = "flex";
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function convertImage() {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+      const format = document.getElementById("formatSelect").value;
+      img.src = preview.src;
+
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        const link = document.createElement("a");
+        link.download = `converted.${format.split("/")[1]}`;
+        link.href = canvas.toDataURL(format, 0.9);
+        link.click();
+      };
+    }
+  </script>
+</body>
+</html>
