@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keyword Density Checker</title>
+
+<style>
+  :root {
+    --primary: #007bff;
+    --light: #f4f9ff;
+    --white: #ffffff;
+    --dark: #1a1a1a;
+    --radius: 12px;
+    --shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+
+  * {
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  body {
+    background: var(--light);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    background: var(--white);
+    padding: 25px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    max-width: 900px;
+    width: 100%;
+  }
+
+  h1 {
+    text-align: center;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+
+  p {
+    text-align: center;
+    color: #555;
+    margin-bottom: 25px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 200px;
+    padding: 12px;
+    border-radius: var(--radius);
+    border: 1px solid #ccc;
+    resize: vertical;
+    font-size: 1rem;
+  }
+
+  button {
+    display: block;
+    margin: 20px auto;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background: #0056b3;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+  }
+
+  th {
+    background-color: var(--primary);
+    color: white;
+  }
+
+  .result {
+    margin-top: 25px;
+    text-align: center;
+  }
+
+  @media (max-width: 700px) {
+    textarea {
+      height: 150px;
+    }
+    button {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🔍 Keyword Density Checker</h1>
+  <p>Analyze your content to find the most used keywords — Bright Blue & White Theme</p>
+
+  <textarea id="textInput" placeholder="Paste or type your content here..."></textarea>
+  <button id="analyzeBtn">Analyze Text</button>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+document.getElementById("analyzeBtn").addEventListener("click", () => {
+  const text = document.getElementById("textInput").value.trim().toLowerCase();
+  const resultDiv = document.getElementById("result");
+
+  if (!text) {
+    resultDiv.innerHTML = "<p style='color:red;'>Please enter some text to analyze.</p>";
+    return;
+  }
+
+  // Remove punctuation and split text
+  const cleanText = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+  const words = cleanText.split(/\s+/).filter(Boolean);
+  const totalWords = words.length;
+
+  const freq = {};
+  words.forEach(word => {
+    if (word.length > 1) { // ignore single letters
+      freq[word] = (freq[word] || 0) + 1;
+    }
+  });
+
+  // Sort keywords by frequency
+  const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+
+  let html = `<h3>📊 Keyword Density Results</h3>`;
+  html += `<p>Total Words: <strong>${totalWords}</strong></p>`;
+  html += `<table><tr><th>Keyword</th><th>Count</th><th>Density (%)</th></tr>`;
+
+  sorted.forEach(([word, count]) => {
+    const density = ((count / totalWords) * 100).toFixed(2);
+    html += `<tr><td>${word}</td><td>${count}</td><td>${density}</td></tr>`;
+  });
+
+  html += "</table>";
+  resultDiv.innerHTML = html;
+});
+</script>
+
+</body>
+</html>
