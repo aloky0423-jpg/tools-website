@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Rotator & Converter</title>
+
+  <style>
+    :root {
+      --primary: #007bff;
+      --light: #f8f9fa;
+      --text: #222;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--light);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h2 {
+      color: var(--primary);
+      margin-bottom: 15px;
+    }
+
+    .upload-area {
+      border: 2px dashed var(--primary);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .upload-area:hover {
+      background: rgba(0, 123, 255, 0.05);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    #preview {
+      max-width: 100%;
+      margin-top: 20px;
+      border-radius: var(--radius);
+      display: none;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    button, select, input[type="number"] {
+      padding: 10px 15px;
+      border-radius: var(--radius);
+      border: 1px solid var(--primary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    select, input[type="number"] {
+      background: white;
+      color: var(--text);
+    }
+
+    canvas {
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      .controls {
+        flex-direction: column;
+      }
+
+      button, select, input {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🌀 Image Rotator & Converter</h2>
+    <label for="imageInput" class="upload-area">
+      <p>📤 Click or drag an image to upload</p>
+    </label>
+    <input type="file" id="imageInput" accept="image/*" />
+
+    <img id="preview" alt="Preview Image" />
+
+    <div class="controls" id="controls" style="display:none;">
+      <div>
+        <button data-rotate="90">Rotate 90°</button>
+        <button data-rotate="180">Rotate 180°</button>
+        <button data-rotate="270">Rotate 270°</button>
+      </div>
+      <div>
+        <input type="number" id="customAngle" placeholder="Custom angle (°)" min="0" max="360" />
+        <button id="rotateCustom">Rotate</button>
+      </div>
+      <select id="formatSelect">
+        <option value="image/png">PNG</option>
+        <option value="image/jpeg">JPG</option>
+        <option value="image/webp">WEBP</option>
+      </select>
+      <button id="downloadBtn">Download</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script>
+    const imageInput = document.getElementById('imageInput');
+    const preview = document.getElementById('preview');
+    const canvas = document.getElementById('canvas');
+    const formatSelect = document.getElementById('formatSelect');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const customAngle = document.getElementById('customAngle');
+    const rotateCustom = document.getElementById('rotateCustom');
+    const controls = document.getElementById('controls');
+
+    let image = new Image();
+    let rotation = 0;
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        image.src = reader.result;
+        preview.src = reader.result;
+        preview.style.display = 'block';
+        controls.style.display = 'flex';
+        rotation = 0;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function drawRotated(angle) {
+      const radians = (angle * Math.PI) / 180;
+      const width = image.width;
+      const height = image.height;
+
+      const sin = Math.abs(Math.sin(radians));
+      const cos = Math.abs(Math.cos(radians));
+      const newWidth = width * cos + height * sin;
+      const newHeight = width * sin + height * cos;
+
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      const ctx = canvas.getContext('2d');
+
+      ctx.translate(newWidth / 2, newHeight / 2);
+      ctx.rotate(radians);
+      ctx.drawImage(image, -width / 2, -height / 2);
+      preview.src = canvas.toDataURL();
+    }
+
+    document.querySelectorAll('[data-rotate]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        rotation = (rotation + parseInt(btn.dataset.rotate)) % 360;
+        drawRotated(rotation);
+      });
+    });
+
+    rotateCustom.addEventListener('click', () => {
+      const angle = parseInt(customAngle.value) || 0;
+      rotation = angle % 360;
+      drawRotated(rotation);
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      const format = formatSelect.value;
+      const link = document.createElement('a');
+      link.download = `rotated.${format.split('/')[1]}`;
+      link.href = canvas.toDataURL(format, 0.9);
+      link.click();
+    });
+  </script>
+</body>
+</html>
