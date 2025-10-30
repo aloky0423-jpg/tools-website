@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Minifier + Image Converter — Bright Blue Tools</title>
+  <style>
+    :root{
+      --primary:#007bff;
+      --bg:#f8f9fa;
+      --card:#ffffff;
+      --text:#222;
+      --radius:12px;
+      --gap:14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+      background:var(--bg);
+      color:var(--text);
+      display:flex;
+      justify-content:center;
+      padding:24px;
+    }
+    .wrap{
+      width:100%;
+      max-width:1100px;
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:24px;
+      align-items:start;
+    }
+
+    header{
+      grid-column:1/-1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:6px;
+    }
+    h1{color:var(--primary);font-size:20px;margin:0}
+    p.lead{margin:0;color:#333;opacity:.9;font-size:13px}
+
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:16px;
+      box-shadow:0 6px 18px rgba(2,10,40,0.06);
+    }
+
+    /* LEFT: MINIFIERS */
+    .minify-area .row{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+    .controls select, .controls button, .controls input[type=file]{
+      padding:10px 12px;border-radius:10px;border:1px solid rgba(0,0,0,0.08);background:white;cursor:pointer;
+    }
+    .controls button{background:var(--primary);color:#fff;border:none}
+    .editor{
+      margin-top:12px;
+      display:flex;
+      gap:12px;
+      height:420px;
+    }
+    .pane{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+    }
+    .pane label{font-size:13px;margin-bottom:8px;color:#333}
+    textarea.code{
+      flex:1;width:100%;resize:none;border-radius:10px;padding:12px;border:1px solid rgba(0,0,0,0.06);
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+      font-size:13px;background:#fafbff;color:#0b1220;overflow:auto;
+    }
+    .actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    .actions button{padding:10px 12px;border-radius:10px;border:none;background:var(--primary);color:#fff;cursor:pointer}
+
+    /* RIGHT: Image Converter */
+    .image-card .upload {
+      border:2px dashed rgba(0,123,255,0.25);
+      border-radius:12px;padding:14px;text-align:center;background:#fffdfd;cursor:pointer;
+    }
+    .image-card input[type=file]{display:none}
+    .img-preview{margin-top:12px;border-radius:10px;overflow:hidden;background:#eef7ff;padding:8px;display:flex;justify-content:center;align-items:center;min-height:160px}
+    .img-preview img{max-width:100%;max-height:320px;border-radius:8px;display:block}
+    .img-controls{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+    .img-controls input[type=range]{width:150px}
+    .small{font-size:13px;color:#333}
+
+    /* output + download */
+    .output-actions{display:flex;gap:8px;margin-top:10px}
+    .output-actions a, .output-actions button{padding:10px 12px;border-radius:10px;border:none;background:var(--primary);color:#fff;text-decoration:none;cursor:pointer}
+
+    /* responsive */
+    @media (max-width:1000px){
+      .wrap{grid-template-columns:1fr; padding-bottom:30px}
+      .editor{flex-direction:column;height:auto}
+      .image-card .img-preview{min-height:200px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Minifier & Image Converter</h1>
+        <p class="lead">HTML / CSS / JS minifier — preview + download. Image upload, preview, convert & compress. Bright blue theme.</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <small style="color:#666">Built for your multi-tool site</small>
+      </div>
+    </header>
+
+    <!-- LEFT: Minifier -->
+    <section class="card minify-area">
+      <div class="row controls">
+        <select id="langSelect" title="Select code type">
+          <option value="html">HTML</option>
+          <option value="css">CSS</option>
+          <option value="js">JavaScript</option>
+        </select>
+
+        <input type="file" id="codeFile" accept=".html,.htm,.css,.js,.txt" />
+
+        <button id="minifyBtn">Minify</button>
+        <button id="downloadCodeBtn">Download Minified</button>
+        <button id="clearBtn" style="background:#eee;color:#111">Clear</button>
+      </div>
+
+      <div class="editor">
+        <div class="pane">
+          <label for="inputCode">Input (paste or upload file)</label>
+          <textarea id="inputCode" class="code" placeholder="Paste your HTML/CSS/JS here..."></textarea>
+          <div style="display:flex;justify-content:space-between;margin-top:8px">
+            <div class="small">Size: <span id="inputSize">0</span> bytes</div>
+            <div class="small">Lines: <span id="inputLines">0</span></div>
+          </div>
+        </div>
+
+        <div class="pane">
+          <label for="outputCode">Minified Output</label>
+          <textarea id="outputCode" class="code" readonly placeholder="Minified code will appear here..."></textarea>
+          <div class="actions">
+            <button id="copyBtn">Copy</button>
+            <button id="beautifyBtn" style="background:#0b73ff">Beautify (quick)</button>
+            <div style="margin-left:auto" class="small">Minified size: <span id="outSize">0</span> bytes</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Image Converter -->
+    <aside class="card image-card">
+      <h3 style="color:var(--primary);margin:0 0 8px 0">🖼 Image Converter & Compressor</h3>
+
+      <label class="upload" for="imageInput">
+        <div style="font-weight:600;color:var(--primary)">Click to upload image</div>
+        <div class="small">PNG, JPG, JPEG, WEBP allowed — or drag & drop</div>
+      </label>
+      <input type="file" id="imageInput" accept="image/*" />
+
+      <div class="img-preview" id="imgPreview"><div class="small">No image uploaded</div></div>
+
+      <div class="img-controls" id="imgControls" style="display:none">
+        <select id="outFormat">
+          <option value="image/png">PNG</option>
+          <option value="image/jpeg">JPEG</option>
+          <option value="image/webp">WEBP</option>
+        </select>
+
+        <label class="small" for="qualityRange">Quality</label>
+        <input id="qualityRange" type="range" min="10" max="100" value="90" />
+
+        <button id="convertImageBtn">Convert & Download</button>
+        <button id="downloadCompressedBtn" style="display:none">Download Compressed</button>
+      </div>
+
+      <div id="imgInfo" style="margin-top:10px;font-size:13px;color:#444"></div>
+    </aside>
+  </div>
+
+  <script>
+    // ---------- Utilities ----------
+    const el = (id)=>document.getElementById(id);
+    const blobToDataURL = (blob)=> new Promise((res,rej)=>{
+      const fr = new FileReader();
+      fr.onload = ()=>res(fr.result);
+      fr.onerror = rej;
+      fr.readAsDataURL(blob);
+    });
+
+    // update size/line counters
+    function updateStats(){
+      const input = el('inputCode').value;
+      el('inputSize').textContent = new Blob([input]).size;
+      el('inputLines').textContent = (input.match(/\n/g)||[]).length + 1;
+      el('outSize').textContent = new Blob([el('outputCode').value]).size;
+    }
+    document.getElementById('inputCode').addEventListener('input',updateStats);
+
+    // ---------- File load (code) ----------
+    el('codeFile').addEventListener('change', (e)=>{
+      const f = e.target.files[0];
+      if(!f) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        el('inputCode').value = reader.result;
+        updateStats();
+      };
+      reader.readAsText(f);
+    });
+
+    // drag & drop for image upload area label
+    const uploadLabel = document.querySelector('.upload');
+    uploadLabel.addEventListener('dragover',(e)=>{e.preventDefault();uploadLabel.style.background='#f0fbff'});
+    uploadLabel.addEventListener('dragleave',(e)=>{uploadLabel.style.background='';});
+    uploadLabel.addEventListener('drop',(e)=>{
+      e.preventDefault();
+      uploadLabel.style.background='';
+      const file = e.dataTransfer.files[0];
+      if(file) el('imageInput').files = e.dataTransfer.files, handleImageFile(file);
+    });
+
+    // ---------- MINIFIERS ----------
+    // HTML minifier - remove comments and collapse whitespace between tags
+    function minifyHTML(input){
+      if(!input) return '';
+      // Remove HTML comments (but keep conditional comments like [if ...] — simple approach: keep if contains [if or <![)
+      input = input.replace(/<!--([\s\S]*?)-->/g, (m, g1)=>{
+        if(/\[if|\<\!|DOCTYPE/i.test(m)) return m;
+        return '';
+      });
+      // Collapse whitespace between tags
+      input = input.replace(/>\s+</g, "><");
+      // Collapse multiple spaces/newlines
+      input = input.replace(/\s{2,}/g, ' ');
+      // Trim
+      return input.trim();
+    }
+
+    // CSS minifier - remove comments and unnecessary whitespace
+    function minifyCSS(input){
+      if(!input) return '';
+      // Remove comments
+      input = input.replace(/\/\*[\s\S]*?\*\//g, '');
+      // Remove whitespace around symbols
+      input = input.replace(/\s*{\s*/g, '{');
+      input = input.replace(/\s*}\s*/g, '}');
+      input = input.replace(/\s*;\s*/g, ';');
+      input = input.replace(/\s*:\s*/g, ':');
+      input = input.replace(/\s*,\s*/g, ',');
+      // Remove unnecessary semicolons and newlines
+      input = input.replace(/;}/g, '}');
+      input = input.replace(/\n+/g, '');
+      return input.trim();
+    }
+
+    // JS minifier - conservative: remove block and line-comments when not inside strings/templates
+    function minifyJS(input){
+      if(!input) return '';
+      let out = '';
+      let i=0, len = input.length;
+      let inSingle=false, inDouble=false, inTemplate=false, inRegex=false;
+      while(i < len){
+        const ch = input[i];
+        const ch2 = input[i+1];
+
+        // toggle string/template modes
+        if(!inSingle && !inDouble && !inTemplate && ch === '/' && ch2 === '/'){
+          // single-line comment -> skip until newline
+          i += 2;
+          while(i < len && input[i] !== '\n') i++;
+          continue;
+        }
+        if(!inSingle && !inDouble && !inTemplate && ch === '/' && ch2 === '*'){
+          // block comment -> skip until */
+          i += 2;
+          while(i < len && !(input[i] === '*' && input[i+1] === '/')) i++;
+          i += 2;
+          continue;
+        }
+
+        // handle entering/exiting strings/templates
+        if(ch === "'" && !inDouble && !inTemplate){
+          out += ch; i++;
+          inSingle = !inSingle;
+          // copy until end of single string, respecting escapes
+          while(i < len){
+            const c = input[i];
+            out += c;
+            if(c === "'" && input[i-1] !== '\\') { i++; inSingle=false; break; }
+            i++;
+          }
+          continue;
+        }
+        if(ch === '"' && !inSingle && !inTemplate){
+          out += ch; i++;
+          inDouble = !inDouble;
+          while(i < len){
+            const c = input[i];
+            out += c;
+            if(c === '"' && input[i-1] !== '\\') { i++; inDouble=false; break; }
+            i++;
+          }
+          continue;
+        }
+        if(ch === '`' && !inSingle && !inDouble){
+          // template literal — copy until closing backtick, handle ${...} expressions recursively
+          out += ch; i++; inTemplate = true;
+          while(i < len){
+            const c = input[i];
+            out += c;
+            if(c === '`' && input[i-1] !== '\\'){ i++; inTemplate=false; break; }
+            // handle ${ ... } blocks which may contain strings/comments - but we'll copy verbatim
+            i++;
+          }
+          continue;
+        }
+
+        // if not string/comment, add char
+        out += ch;
+        i++;
+      }
+
+      // final whitespace collapse: remove extra newlines and leading/trailing spaces on lines
+      out = out.replace(/\r\n/g, '\n');
+      // remove blank lines
+      out = out.split('\n').map(line=>line.trim()).filter(Boolean).join('');
+      // collapse multiple spaces
+      out = out.replace(/\s{2,}/g,' ');
+      return out.trim();
+    }
+
+    // dispatcher
+    function minifyDispatcher(lang, text){
+      if(lang === 'html') return minifyHTML(text);
+      if(lang === 'css') return minifyCSS(text);
+      if(lang === 'js') return minifyJS(text);
+      return text;
+    }
+
+    // hooks
+    el('minifyBtn').addEventListener('click', ()=>{
+      const lang = el('langSelect').value;
+      const input = el('inputCode').value;
+      if(!input.trim()){ alert('Paste or load some code to minify.'); return; }
+      try{
+        const out = minifyDispatcher(lang,input);
+        el('outputCode').value = out;
+        updateStats();
+        alert('Minification done ✔');
+      }catch(err){
+        alert('Error while minifying: '+err.message);
+      }
+    });
+
+    // copy output
+    el('copyBtn').addEventListener('click', ()=>{
+      const out = el('outputCode').value;
+      if(!out) return;
+      navigator.clipboard?.writeText(out).then(()=> alert('Copied to clipboard ✔'), ()=>{ alert('Copy failed — your browser may block clipboard access.'); });
+    });
+
+    // clear
+    el('clearBtn').addEventListener('click', ()=>{
+      el('inputCode').value = '';
+      el('outputCode').value = '';
+      updateStats();
+    });
+
+    // basic beautify (quick): re-indent using 2-space for HTML/JS/CSS using simple rules
+    el('beautifyBtn').addEventListener('click', ()=>{
+      const lang = el('langSelect').value;
+      const source = el('outputCode').value || el('inputCode').value;
+      if(!source) return;
+      if(lang === 'html'){
+        // pretty simple: insert newline between tags for readability
+        const formatted = source.replace(/></g, '>\n<');
+        el('outputCode').value = formatted;
+      } else if(lang === 'css'){
+        const formatted = source.replace(/{/g,'{\n  ').replace(/}/g,'\n}\n').replace(/;/g,';\n  ');
+        el('outputCode').value = formatted;
+      } else if(lang === 'js'){
+        // very naive: newline after semicolons and braces
+        let f = source.replace(/;/g,';\n').replace(/{/g,'{\n').replace(/}/g,'\n}\n');
+        el('outputCode').value = f;
+      }
+      updateStats();
+    });
+
+    // download minified
+    el('downloadCodeBtn').addEventListener('click', ()=>{
+      const out = el('outputCode').value;
+      if(!out) return alert('Nothing to download. Minify first.');
+      const lang = el('langSelect').value;
+      const ext = lang === 'html' ? 'html' : lang === 'css' ? 'css' : 'js';
+      const blob = new Blob([out], {type:'text/plain;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `minified.${ext}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // ---------- Image Converter ----------
+    const imageInput = el('imageInput');
+    const imgPreview = el('imgPreview');
+    const imgControls = el('imgControls');
+    const imgInfo = el('imgInfo');
+    let currentImageFile = null;
+    let currentImageDataUrl = '';
+
+    function showImageInfo(file){
+      imgInfo.innerHTML = `Name: <b>${file.name}</b> • Type: ${file.type || 'n/a'} • Size: ${Math.round(file.size/1024)} KB`;
+    }
+
+    function handleImageFile(file){
+      if(!file) return;
+      if(!file.type.startsWith('image/')) return alert('Please upload an image file.');
+      currentImageFile = file;
+      const reader = new FileReader();
+      reader.onload = (ev)=>{
+        currentImageDataUrl = ev.target.result;
+        imgPreview.innerHTML = `<img id="previewImg" src="${currentImageDataUrl}" alt="preview">`;
+        imgControls.style.display = 'flex';
+        showImageInfo(file);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    imageInput.addEventListener('change',(e)=> {
+      const f = e.target.files[0];
+      handleImageFile(f);
+    });
+
+    // small helper: resize + export image via canvas with quality
+    async function convertAndDownloadImage(format, quality){
+      if(!currentImageDataUrl) return alert('Upload an image first.');
+      const img = new Image();
+      img.src = currentImageDataUrl;
+      await img.decode();
+      // optional downscale for compression: if image too large, scale it down to 1920px max
+      const maxDim = 1920;
+      let w = img.naturalWidth, h = img.naturalHeight;
+      let scale = Math.min(1, maxDim / Math.max(w,h));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(w * scale);
+      canvas.height = Math.round(h * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // toDataURL type/quality
+      let mime = format;
+      let dataUrl;
+      if(format === 'image/png'){
+        dataUrl = canvas.toDataURL('image/png');
+      } else {
+        // jpeg/webp allow quality param
+        dataUrl = canvas.toDataURL(mime, quality/100);
+      }
+      // create download link
+      const a = document.createElement('a');
+      const ext = mime.split('/')[1].split('+')[0];
+      a.href = dataUrl;
+      a.download = `converted.${ext}`;
+      a.click();
+    }
+
+    el('convertImageBtn').addEventListener('click', ()=>{
+      const fmt = el('outFormat').value;
+      const q = Number(el('qualityRange').value);
+      convertAndDownloadImage(fmt, q);
+    });
+
+    // offer a "compressed" saved blob for download (preview compressed)
+    el('qualityRange').addEventListener('input', async ()=>{
+      const fmt = el('outFormat').value;
+      const q = Number(el('qualityRange').value);
+      if(!currentImageDataUrl) return;
+      // show quick preview by rendering compressed data onto preview
+      const img = new Image();
+      img.src = currentImageDataUrl;
+      await img.decode();
+      const canvas = document.createElement('canvas');
+      const maxDim = 1200;
+      let w = img.naturalWidth, h = img.naturalHeight;
+      let scale = Math.min(1, maxDim / Math.max(w,h));
+      canvas.width = Math.round(w * scale);
+      canvas.height = Math.round(h * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      let dataUrl = (fmt === 'image/png') ? canvas.toDataURL('image/png') : canvas.toDataURL(fmt, q/100);
+      const previewImg = document.getElementById('previewImg');
+      if(previewImg) previewImg.src = dataUrl;
+      el('downloadCompressedBtn').style.display = 'inline-block';
+      el('downloadCompressedBtn').onclick = ()=>{
+        const a = document.createElement('a');
+        const ext = fmt.split('/')[1];
+        a.href = dataUrl;
+        a.download = `compressed.${ext}`;
+        a.click();
+      };
+    });
+
+    // initialize default stats
+    updateStats();
+
+    // keyboard shortcuts (Ctrl+Enter to minify)
+    window.addEventListener('keydown',(e)=>{
+      if((e.ctrlKey||e.metaKey) && e.key === 'Enter'){
+        el('minifyBtn').click();
+      }
+    });
+
+  </script>
+</body>
+</html>
