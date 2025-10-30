@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Contrast Checker & Image Converter</title>
+
+<style>
+  :root {
+    --primary: #007bff;
+    --light: #f4f9ff;
+    --white: #ffffff;
+    --dark: #1a1a1a;
+    --radius: 12px;
+    --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  * {
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+  }
+
+  body {
+    background: var(--light);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 25px;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  h1 {
+    text-align: center;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+
+  p {
+    text-align: center;
+    color: #555;
+    margin-bottom: 25px;
+  }
+
+  .section {
+    margin-bottom: 40px;
+  }
+
+  label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  input, button, select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: var(--radius);
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+
+  button {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background: #0056b3;
+  }
+
+  .color-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 15px;
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  .result {
+    text-align: center;
+    font-weight: bold;
+    color: var(--primary);
+    font-size: 1.2rem;
+  }
+
+  .upload-area {
+    border: 2px dashed var(--primary);
+    border-radius: var(--radius);
+    text-align: center;
+    padding: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .upload-area:hover {
+    background: rgba(0,123,255,0.05);
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+
+  .preview img {
+    max-width: 100%;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-top: 15px;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  @media (max-width: 700px) {
+    .controls {
+      flex-direction: column;
+      align-items: center;
+    }
+    button, select {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎨 Contrast Checker & Image Converter</h1>
+  <p>Check color contrast and convert images easily — Blue & White Theme</p>
+
+  <!-- Contrast Checker -->
+  <div class="section">
+    <h2 style="color:var(--primary);">🧩 Contrast Checker</h2>
+
+    <label for="color1">Text Color (Foreground):</label>
+    <input type="color" id="color1" value="#000000">
+
+    <label for="color2">Background Color:</label>
+    <input type="color" id="color2" value="#ffffff">
+
+    <div class="color-preview" id="colorPreview">
+      <p id="previewText">Contrast Preview Text</p>
+    </div>
+
+    <button id="checkContrastBtn">Check Contrast</button>
+    <div class="result" id="contrastResult"></div>
+  </div>
+
+  <!-- Image Converter -->
+  <div class="section">
+    <h2 style="color:var(--primary);">🖼 Image Upload & Converter</h2>
+    <label class="upload-area" for="imageInput">📤 Click or drag to upload an image</label>
+    <input type="file" id="imageInput" accept="image/*">
+    <div class="preview" id="preview"></div>
+
+    <div class="controls" id="controls" style="display:none;">
+      <select id="formatSelect">
+        <option value="image/png">PNG</option>
+        <option value="image/jpeg">JPEG</option>
+        <option value="image/webp">WEBP</option>
+      </select>
+      <button id="convertImageBtn">Convert & Download</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- CONTRAST CHECKER ----------
+function getLuminance(hex) {
+  hex = hex.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16) / 255;
+  const g = parseInt(hex.substring(2, 4), 16) / 255;
+  const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+  const a = [r, g, b].map(v => 
+    v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+  );
+
+  return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+}
+
+function getContrastRatio(hex1, hex2) {
+  const L1 = getLuminance(hex1);
+  const L2 = getLuminance(hex2);
+  const brightest = Math.max(L1, L2);
+  const darkest = Math.min(L1, L2);
+  return (brightest + 0.05) / (darkest + 0.05);
+}
+
+const color1 = document.getElementById('color1');
+const color2 = document.getElementById('color2');
+const contrastResult = document.getElementById('contrastResult');
+const previewText = document.getElementById('previewText');
+const colorPreview = document.getElementById('colorPreview');
+const checkContrastBtn = document.getElementById('checkContrastBtn');
+
+checkContrastBtn.addEventListener('click', () => {
+  const ratio = getContrastRatio(color1.value, color2.value).toFixed(2);
+  colorPreview.style.backgroundColor = color2.value;
+  previewText.style.color = color1.value;
+
+  let accessibility = '';
+  if (ratio >= 7) accessibility = '✅ Excellent (AAA)';
+  else if (ratio >= 4.5) accessibility = '✅ Good (AA)';
+  else if (ratio >= 3) accessibility = '⚠️ Minimum (AA Large Text)';
+  else accessibility = '❌ Fails Accessibility';
+
+  contrastResult.innerHTML = `Contrast Ratio: <b>${ratio}:1</b><br>${accessibility}`;
+});
+
+// ---------- IMAGE CONVERTER ----------
+const imageInput = document.getElementById("imageInput");
+const preview = document.getElementById("preview");
+const controls = document.getElementById("controls");
+const convertImageBtn = document.getElementById("convertImageBtn");
+let uploadedImage = null;
+
+imageInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    uploadedImage = new Image();
+    uploadedImage.src = reader.result;
+    preview.innerHTML = `<img src="${reader.result}" alt="Preview">`;
+    controls.style.display = "flex";
+  };
+  reader.readAsDataURL(file);
+});
+
+convertImageBtn.addEventListener("click", () => {
+  if (!uploadedImage) return alert("Please upload an image first.");
+  const format = document.getElementById("formatSelect").value;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = uploadedImage.width;
+  canvas.height = uploadedImage.height;
+  ctx.drawImage(uploadedImage, 0, 0);
+  const link = document.createElement("a");
+  link.download = `converted.${format.split("/")[1]}`;
+  link.href = canvas.toDataURL(format, 0.9);
+  link.click();
+});
+</script>
+</body>
+</html>
