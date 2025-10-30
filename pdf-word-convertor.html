@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF ↔ Word Converter Tool</title>
+
+  <style>
+    :root {
+      --primary: #007bff;
+      --light: #f8f9fa;
+      --text: #222;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--light);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h2 {
+      color: var(--primary);
+      margin-bottom: 15px;
+    }
+
+    .upload-area {
+      border: 2px dashed var(--primary);
+      border-radius: var(--radius);
+      padding: 25px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .upload-area:hover {
+      background-color: rgba(0,123,255,0.05);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    iframe {
+      width: 100%;
+      height: 300px;
+      margin-top: 20px;
+      border-radius: var(--radius);
+      display: none;
+    }
+
+    .preview {
+      display: none;
+      text-align: left;
+      margin-top: 20px;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    select, button {
+      padding: 10px 15px;
+      border-radius: var(--radius);
+      border: 1px solid var(--primary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    select {
+      background: #fff;
+      color: var(--text);
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    @media (max-width: 600px) {
+      .controls {
+        flex-direction: column;
+      }
+      select, button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📄 PDF ↔ Word Converter</h2>
+
+    <label for="fileInput" class="upload-area">
+      <p>📤 Click or drag a PDF/DOCX file to upload</p>
+    </label>
+    <input type="file" id="fileInput" accept=".pdf,.docx" />
+
+    <iframe id="pdfPreview"></iframe>
+    <div class="preview" id="wordPreview">
+      <h4>Word Document Uploaded:</h4>
+      <p id="wordInfo"></p>
+    </div>
+
+    <div class="controls" id="controls" style="display:none;">
+      <select id="conversionType">
+        <option value="pdf-to-word">PDF → Word</option>
+        <option value="word-to-pdf">Word → PDF</option>
+      </select>
+      <button id="convertBtn">Convert</button>
+      <button id="downloadBtn" style="display:none;">Download</button>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const pdfPreview = document.getElementById('pdfPreview');
+    const wordPreview = document.getElementById('wordPreview');
+    const wordInfo = document.getElementById('wordInfo');
+    const controls = document.getElementById('controls');
+    const convertBtn = document.getElementById('convertBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const conversionType = document.getElementById('conversionType');
+
+    let currentFile = null;
+    let convertedBlob = null;
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      currentFile = file;
+      const fileType = file.name.split('.').pop().toLowerCase();
+
+      pdfPreview.style.display = 'none';
+      wordPreview.style.display = 'none';
+      controls.style.display = 'flex';
+      downloadBtn.style.display = 'none';
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (fileType === 'pdf') {
+          pdfPreview.src = reader.result;
+          pdfPreview.style.display = 'block';
+        } else if (fileType === 'docx') {
+          wordInfo.textContent = `File Name: ${file.name} (${Math.round(file.size / 1024)} KB)`;
+          wordPreview.style.display = 'block';
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    convertBtn.addEventListener('click', () => {
+      if (!currentFile) return alert('Please upload a file first!');
+      const selected = conversionType.value;
+
+      let outputType, extension;
+      if (selected === 'pdf-to-word') {
+        outputType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        extension = 'docx';
+      } else {
+        outputType = 'application/pdf';
+        extension = 'pdf';
+      }
+
+      // Mock conversion — replace with real conversion logic later
+      convertedBlob = new Blob([`Converted ${currentFile.name}`], { type: outputType });
+      alert(`Conversion completed! (${selected.toUpperCase().replace('-', ' → ')})`);
+      downloadBtn.style.display = 'inline-block';
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!convertedBlob) return;
+      const link = document.createElement('a');
+      const ext = conversionType.value === 'pdf-to-word' ? 'docx' : 'pdf';
+      link.download = `converted.${ext}`;
+      link.href = URL.createObjectURL(convertedBlob);
+      link.click();
+    });
+  </script>
+</body>
+</html>
