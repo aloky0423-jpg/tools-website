@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Base64 Encoder / Decoder | Multi-Tool</title>
+<style>
+  :root {
+    --primary: #007bff;
+    --bg: #f4f9ff;
+    --white: #ffffff;
+    --shadow: 0 6px 16px rgba(0,0,0,0.08);
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+  body {
+    margin: 0; padding: 20px;
+    background: var(--bg);
+    color: #222;
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 1000px;
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  h1 {
+    text-align: center;
+    color: var(--primary);
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+  }
+
+  p {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #444;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: var(--radius);
+    resize: vertical;
+    font-size: 0.9rem;
+  }
+
+  .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px 0;
+    justify-content: center;
+  }
+
+  button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  button.secondary {
+    background: #e0e0e0;
+    color: #111;
+  }
+
+  .section {
+    margin-top: 25px;
+    padding: 15px;
+    background: #f9fbff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .preview {
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  .preview img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+
+  input[type="file"], select {
+    padding: 8px;
+    border-radius: var(--radius);
+    border: 1px solid #ccc;
+    background: #fff;
+  }
+
+  @media (max-width: 700px) {
+    .btn-group {
+      flex-direction: column;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧩 Base64 Encoder / Decoder Tool</h1>
+    <p>Encode or Decode text and images easily — Bright blue & white responsive design</p>
+
+    <!-- Base64 Text Tool -->
+    <div class="section">
+      <h3 style="color:var(--primary)">📜 Text Encoder / Decoder</h3>
+      <textarea id="base64Input" placeholder="Enter text or Base64 code here..."></textarea>
+      <div class="btn-group">
+        <button id="encodeBtn">Encode to Base64</button>
+        <button id="decodeBtn">Decode from Base64</button>
+        <button id="clearBtn" class="secondary">Clear</button>
+        <button id="downloadTxtBtn">Download Result</button>
+      </div>
+      <textarea id="base64Output" placeholder="Result will appear here..."></textarea>
+    </div>
+
+    <!-- Image Tool -->
+    <div class="section">
+      <h3 style="color:var(--primary)">🖼 Image Base64 Converter</h3>
+      <input type="file" id="imageInput" accept="image/*"><br><br>
+      <div class="btn-group">
+        <button id="toBase64Btn">Convert Image → Base64</button>
+        <button id="fromBase64Btn">Convert Base64 → Image</button>
+      </div>
+
+      <textarea id="imgBase64Area" placeholder="Base64 string for image will appear here..."></textarea>
+      <div class="preview" id="preview"></div>
+
+      <div class="btn-group">
+        <select id="imgFormat">
+          <option value="image/png">PNG</option>
+          <option value="image/jpeg">JPEG</option>
+          <option value="image/webp">WEBP</option>
+        </select>
+        <button id="downloadImgBtn">Download Image</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ===== TEXT ENCODER / DECODER =====
+  const inputArea = document.getElementById("base64Input");
+  const outputArea = document.getElementById("base64Output");
+
+  document.getElementById("encodeBtn").addEventListener("click", () => {
+    try {
+      const encoded = btoa(unescape(encodeURIComponent(inputArea.value)));
+      outputArea.value = encoded;
+    } catch (err) {
+      alert("Error encoding text. Ensure valid characters.");
+    }
+  });
+
+  document.getElementById("decodeBtn").addEventListener("click", () => {
+    try {
+      const decoded = decodeURIComponent(escape(atob(inputArea.value)));
+      outputArea.value = decoded;
+    } catch (err) {
+      alert("Invalid Base64 string.");
+    }
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    inputArea.value = "";
+    outputArea.value = "";
+  });
+
+  document.getElementById("downloadTxtBtn").addEventListener("click", () => {
+    const blob = new Blob([outputArea.value], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "base64-result.txt";
+    a.click();
+  });
+
+  // ===== IMAGE ENCODER / DECODER =====
+  const imageInput = document.getElementById("imageInput");
+  const imgBase64Area = document.getElementById("imgBase64Area");
+  const preview = document.getElementById("preview");
+  let currentImageData = null;
+
+  document.getElementById("toBase64Btn").addEventListener("click", () => {
+    const file = imageInput.files[0];
+    if (!file) return alert("Please upload an image.");
+    const reader = new FileReader();
+    reader.onload = () => {
+      imgBase64Area.value = reader.result;
+      preview.innerHTML = `<img src="${reader.result}" alt="preview">`;
+      currentImageData = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById("fromBase64Btn").addEventListener("click", () => {
+    const base64 = imgBase64Area.value.trim();
+    if (!base64) return alert("Enter a Base64 image string.");
+    preview.innerHTML = `<img src="${base64}" alt="decoded image">`;
+    currentImageData = base64;
+  });
+
+  document.getElementById("downloadImgBtn").addEventListener("click", () => {
+    if (!currentImageData) return alert("No image available.");
+    const format = document.getElementById("imgFormat").value;
+    const link = document.createElement("a");
+    link.href = currentImageData;
+    link.download = `converted.${format.split("/")[1]}`;
+    link.click();
+  });
+</script>
+</body>
+</html>
