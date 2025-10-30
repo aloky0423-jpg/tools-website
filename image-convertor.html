@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Image Converter Tool</title>
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #ffffff;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+  }
+
+  header {
+    background: #007bff;
+    color: white;
+    padding: 15px 0;
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 30px auto;
+    background: #f8f9ff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  input[type="file"], select, button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: 1px solid #007bff;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+  }
+
+  input[type="file"]:hover, select:hover, button:hover {
+    box-shadow: 0 0 8px rgba(0,123,255,0.4);
+  }
+
+  button {
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  button:hover {
+    background: #0056b3;
+  }
+
+  .preview-container {
+    margin-top: 20px;
+  }
+
+  .preview-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-top: 10px;
+    border: 2px solid #007bff;
+  }
+
+  .download-btn {
+    background: #28a745;
+    margin-top: 15px;
+  }
+
+  .download-btn:hover {
+    background: #1e7e34;
+  }
+
+  footer {
+    margin-top: 40px;
+    padding: 10px;
+    font-size: 14px;
+    color: #666;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .container {
+      width: 90%;
+      padding: 15px;
+    }
+    header {
+      font-size: 1.3rem;
+    }
+  }
+</style>
+</head>
+<body>
+  <header>🖼️ Image Converter Tool</header>
+
+  <div class="container">
+    <input type="file" id="upload" accept="image/*" />
+    
+    <select id="format">
+      <option value="image/png">Convert to PNG</option>
+      <option value="image/jpeg">Convert to JPG</option>
+      <option value="image/webp">Convert to WEBP</option>
+    </select>
+
+    <button id="convertBtn">Convert & Download</button>
+
+    <div class="preview-container">
+      <p id="fileName"></p>
+      <img id="preview" src="#" alt="Preview" style="display:none;">
+    </div>
+  </div>
+
+  <footer>© 2025 Multi-Tool Web Suite | Image Converter</footer>
+
+<script>
+  const upload = document.getElementById('upload');
+  const preview = document.getElementById('preview');
+  const fileName = document.getElementById('fileName');
+  const convertBtn = document.getElementById('convertBtn');
+  const formatSelect = document.getElementById('format');
+  let uploadedImage = new Image();
+
+  // Preview Image
+  upload.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      uploadedImage.src = event.target.result;
+      preview.src = event.target.result;
+      preview.style.display = 'block';
+      fileName.textContent = `Selected: ${file.name}`;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Convert and Download Image
+  convertBtn.addEventListener('click', () => {
+    if (!uploadedImage.src) {
+      alert("Please upload an image first!");
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = uploadedImage.width;
+    canvas.height = uploadedImage.height;
+    ctx.drawImage(uploadedImage, 0, 0);
+
+    const selectedFormat = formatSelect.value;
+    let quality = 0.8; // compression level
+
+    const dataUrl = canvas.toDataURL(selectedFormat, quality);
+    const link = document.createElement('a');
+    link.download = `converted-image.${selectedFormat.split('/')[1]}`;
+    link.href = dataUrl;
+    link.click();
+  });
+</script>
+</body>
+</html>
