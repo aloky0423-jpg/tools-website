@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loan EMI Calculator Tool</title>
+
+  <style>
+    :root {
+      --primary: #007bff;
+      --light: #f8f9fa;
+      --dark: #222;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h2 {
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    input, select {
+      padding: 10px;
+      border: 1px solid var(--primary);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      width: 80%;
+      margin: 10px 0;
+    }
+
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      margin-top: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .result {
+      margin-top: 20px;
+      font-size: 1.1rem;
+      color: var(--dark);
+    }
+
+    /* Image Converter Section */
+    .upload-area {
+      border: 2px dashed var(--primary);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .upload-area:hover {
+      background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: var(--radius);
+      margin-top: 20px;
+      display: none;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 600px) {
+      input, select {
+        width: 100%;
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      select, button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>💰 Loan EMI Calculator Tool</h2>
+
+  <!-- LOAN EMI CALCULATOR -->
+  <div class="card">
+    <h3>🏦 Calculate Your Loan EMI</h3>
+    <input type="number" id="loanAmount" placeholder="Loan Amount (₹)" min="0" />
+    <input type="number" id="interestRate" placeholder="Annual Interest Rate (%)" min="0" step="0.01" />
+    <input type="number" id="loanTenure" placeholder="Loan Tenure (Years)" min="1" />
+    <button onclick="calculateEMI()">Calculate EMI</button>
+    <div class="result" id="emiResult"></div>
+  </div>
+
+  <!-- IMAGE CONVERTER TOOL -->
+  <div class="card">
+    <h3>🖼️ Image Upload & Convert</h3>
+    <label for="imageInput" class="upload-area">
+      <p>📤 Click or drag to upload an image</p>
+    </label>
+    <input type="file" id="imageInput" accept="image/*" />
+    <img id="preview" alt="Image Preview" />
+
+    <div class="controls" id="controls" style="display:none;">
+      <select id="formatSelect">
+        <option value="image/png">PNG</option>
+        <option value="image/jpeg">JPEG</option>
+        <option value="image/webp">WEBP</option>
+      </select>
+      <button onclick="convertImage()">Convert & Download</button>
+    </div>
+  </div>
+
+  <script>
+    // ---------- LOAN EMI CALCULATOR ----------
+    function calculateEMI() {
+      const amount = parseFloat(document.getElementById('loanAmount').value);
+      const rate = parseFloat(document.getElementById('interestRate').value);
+      const tenure = parseFloat(document.getElementById('loanTenure').value);
+      const result = document.getElementById('emiResult');
+
+      if (!amount || !rate || !tenure) {
+        result.textContent = "⚠️ Please fill all fields correctly.";
+        return;
+      }
+
+      const monthlyRate = rate / 12 / 100;
+      const months = tenure * 12;
+      const emi = (amount * monthlyRate * Math.pow(1 + monthlyRate, months)) /
+                  (Math.pow(1 + monthlyRate, months) - 1);
+
+      const totalPayment = emi * months;
+      const totalInterest = totalPayment - amount;
+
+      result.innerHTML = `
+        <b>Monthly EMI:</b> ₹${emi.toFixed(2)}<br>
+        <b>Total Interest:</b> ₹${totalInterest.toFixed(2)}<br>
+        <b>Total Payment:</b> ₹${totalPayment.toFixed(2)}
+      `;
+    }
+
+    // ---------- IMAGE UPLOAD & CONVERT ----------
+    const imageInput = document.getElementById('imageInput');
+    const preview = document.getElementById('preview');
+    const controls = document.getElementById('controls');
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        preview.src = reader.result;
+        preview.style.display = 'block';
+        controls.style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function convertImage() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      const format = document.getElementById('formatSelect').value;
+      img.src = preview.src;
+
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        const link = document.createElement('a');
+        link.download = `converted.${format.split('/')[1]}`;
+        link.href = canvas.toDataURL(format, 0.9);
+        link.click();
+      };
+    }
+  </script>
+</body>
+</html>
