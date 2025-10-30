@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gradient Generator Tool</title>
+
+  <style>
+    :root {
+      --primary: #007bff;
+      --light: #f8f9fa;
+      --dark: #1a1a1a;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: "Poppins", sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h2 {
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    input[type="color"],
+    select,
+    input[type="text"] {
+      padding: 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--primary);
+      font-size: 1rem;
+      margin: 10px 5px;
+    }
+
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      margin: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .preview {
+      width: 100%;
+      height: 150px;
+      border-radius: var(--radius);
+      margin-top: 20px;
+      transition: 0.3s;
+    }
+
+    textarea {
+      width: 100%;
+      border: 1px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 10px;
+      margin-top: 10px;
+      resize: none;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+
+    /* IMAGE CONVERTER */
+    .upload-area {
+      border: 2px dashed var(--primary);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .upload-area:hover {
+      background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: var(--radius);
+      margin-top: 20px;
+      display: none;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 600px) {
+      input, select {
+        width: 100%;
+      }
+      .controls {
+        flex-direction: column;
+      }
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>🎨 Gradient Generator Tool</h2>
+
+  <!-- GRADIENT GENERATOR -->
+  <div class="card">
+    <h3>🌈 Create Your Gradient</h3>
+    <div>
+      <input type="color" id="color1" value="#007bff">
+      <input type="color" id="color2" value="#00d4ff">
+      <select id="direction">
+        <option value="to right">Left → Right</option>
+        <option value="to bottom">Top → Bottom</option>
+        <option value="to top right">Top Left → Bottom Right</option>
+        <option value="to top left">Top Right → Bottom Left</option>
+      </select>
+    </div>
+    <button onclick="generateGradient()">Generate Gradient</button>
+    <button onclick="downloadGradient()">Download Gradient</button>
+    <div class="preview" id="gradientPreview"></div>
+    <textarea id="cssCode" readonly></textarea>
+  </div>
+
+  <!-- IMAGE CONVERTER -->
+  <div class="card">
+    <h3>🖼️ Image Upload & Converter</h3>
+    <label for="imageInput" class="upload-area">
+      <p>📤 Click or drag to upload an image</p>
+    </label>
+    <input type="file" id="imageInput" accept="image/*" />
+    <img id="preview" alt="Image Preview" />
+
+    <div class="controls" id="controls" style="display:none;">
+      <select id="formatSelect">
+        <option value="image/png">PNG</option>
+        <option value="image/jpeg">JPEG</option>
+        <option value="image/webp">WEBP</option>
+      </select>
+      <button onclick="convertImage()">Convert & Download</button>
+    </div>
+  </div>
+
+  <script>
+    // ---------------- GRADIENT GENERATOR ----------------
+    function generateGradient() {
+      const color1 = document.getElementById("color1").value;
+      const color2 = document.getElementById("color2").value;
+      const direction = document.getElementById("direction").value;
+      const preview = document.getElementById("gradientPreview");
+      const cssCode = document.getElementById("cssCode");
+
+      const gradient = `linear-gradient(${direction}, ${color1}, ${color2})`;
+      preview.style.background = gradient;
+      cssCode.value = `background: ${gradient};`;
+    }
+
+    function downloadGradient() {
+      const preview = document.getElementById("gradientPreview");
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const width = 800, height = 400;
+      canvas.width = width;
+      canvas.height = height;
+
+      const color1 = document.getElementById("color1").value;
+      const color2 = document.getElementById("color2").value;
+      const direction = document.getElementById("direction").value;
+
+      let gradient;
+      if (direction.includes("right")) {
+        gradient = ctx.createLinearGradient(0, 0, width, 0);
+      } else if (direction.includes("bottom")) {
+        gradient = ctx.createLinearGradient(0, 0, 0, height);
+      } else if (direction.includes("top right")) {
+        gradient = ctx.createLinearGradient(0, height, width, 0);
+      } else {
+        gradient = ctx.createLinearGradient(width, height, 0, 0);
+      }
+
+      gradient.addColorStop(0, color1);
+      gradient.addColorStop(1, color2);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+
+      const link = document.createElement("a");
+      link.download = "gradient.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    // ---------------- IMAGE CONVERTER ----------------
+    const imageInput = document.getElementById("imageInput");
+    const preview = document.getElementById("preview");
+    const controls = document.getElementById("controls");
+
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        preview.src = reader.result;
+        preview.style.display = "block";
+        controls.style.display = "flex";
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function convertImage() {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+      const format = document.getElementById("formatSelect").value;
+      img.src = preview.src;
+
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        const link = document.createElement("a");
+        link.download = `converted.${format.split("/")[1]}`;
+        link.href = canvas.toDataURL(format, 0.9);
+        link.click();
+      };
+    }
+  </script>
+</body>
+</html>
